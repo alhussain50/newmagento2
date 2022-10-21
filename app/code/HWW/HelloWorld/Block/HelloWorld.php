@@ -1,13 +1,18 @@
 <?php
 namespace HWW\HelloWorld\Block;
-
+use HWW\HelloWorld\Helper\Data as HwwHelper;
 class HelloWorld extends \Magento\Framework\View\Element\Template
 {
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     protected $scopeConfig;
+    /**
+     * @var \HWW\HelloWorld\Helper\Data
+     */
+    protected $_hwwHelper;
 
+    protected $_storeManager;
     /**
      * Helloworld constructor.
      * @param \Magento\Framework\View\Element\Template\Context $context
@@ -15,12 +20,14 @@ class HelloWorld extends \Magento\Framework\View\Element\Template
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        HwwHelper $hwwHelper,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
-        parent::__construct(
-            $context
-        );
+        parent::__construct(            $context        );
         $this->scopeConfig = $scopeConfig;
+        $_hwwHelper = $hwwHelper;
+        $this->_storeManager = $storeManager;
     }
 
     /**
@@ -63,6 +70,11 @@ class HelloWorld extends \Magento\Framework\View\Element\Template
         return $this->scopeConfig
             ->getValue('helloworld/general/new_text_content', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
-
-
+    public function getHelloWorldConfig(){
+       return  $this->scopeConfig->getValue('helloworld', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    }
+    public function getHelloWorldImage(){
+       $helloWorldConfig= $this->getHelloWorldConfig();
+       return $this ->_storeManager-> getStore();
+    }
 }

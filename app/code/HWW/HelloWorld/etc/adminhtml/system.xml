@@ -17,10 +17,10 @@
                 <field id="new_text_content" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" >
                     <label>New Content goes here</label>
                 </field>
-                <field id="upload_image_id" translate="label comment" type="image" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="image" translate="label comment" type="image" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Select Image</label>
                     <backend_model>HWW\HelloWorld\Model\Config\Backend\Image</backend_model>
-                    <base_url type="media" scope_info="1">/var/www/newmagento/pub/media/images</base_url>
+                    <base_url type="media" scope_info="1">images</base_url>
                     <comment><![CDATA[Allowed file types: jpg, jpeg, gif, png, svg]]></comment>
                 </field>
             </group>
