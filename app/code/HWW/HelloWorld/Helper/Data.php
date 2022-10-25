@@ -50,7 +50,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getBaseUrlMedia()
     {
-       return $this->_storeManager->getStore();
+        return $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
     }
+    
 
 }

@@ -71,10 +71,12 @@ class HelloWorld extends \Magento\Framework\View\Element\Template
             ->getValue('helloworld/general/new_text_content', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
     public function getHelloWorldConfig(){
-       return  $this->scopeConfig->getValue('helloworld', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+       return $this->scopeConfig->getValue('helloworld', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
     public function getHelloWorldImage(){
        $helloWorldConfig= $this->getHelloWorldConfig();
-       return $this ->_storeManager-> getStore();
+    // return $this ->_storeManager-> getStore();
+        return $this->scopeConfig
+            ->getValue('helloworld/general/image', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 }

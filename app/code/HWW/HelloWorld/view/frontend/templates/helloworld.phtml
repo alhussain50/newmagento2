@@ -5,14 +5,12 @@
      * @var $block \HWW\HelloWorld\Block\Helloworld
      */
     $helper = $this->helper('HWW\HelloWorld\Helper\Data');
-    $imgSystem = $helper->getConfig('general\image');
     // $imgName = pathinfo($_FILES['picture']['name'], PATHINFO_FILENAME);
     $urlMedia = $helper->getBaseUrlMedia();
 ?>
-<div class="image-system-wishlist"><img src="<?php echo $block->getHelloWorldImage();?>" ></div>
+<div class="image-system-wishlist"><img src="<?php echo $urlMedia.'images/'.$block->getHelloWorldImage();?>" ></div>
 <h1><?php echo $block->getHelloWorldTxt(); ?></h1>
 <h6><?php echo $block->getTestimonialText(); ?></h6>
-<h1><?php echo $imgSystem; ?></h1>
 <?php $block->getHelloWorldImage();?>
 
 

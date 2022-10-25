@@ -1,0 +1,1 @@
+/var/www/newmagento/lib/web/jquery/spectrum/tinycolor.js
