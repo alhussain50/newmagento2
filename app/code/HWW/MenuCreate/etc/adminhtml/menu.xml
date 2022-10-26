@@ -1,0 +1,6 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="HWW_MenuCreate::testimonial" title="Testimonial" translate="title" module="HWW_MenuCreate" sortOrder="50" resource="HWW_MenuCreate::testimonial"/>
+        <add id="HWW_MenuCreate::testimonial_create" title="Create" translate="title" module="HWW_MenuCreate" parent="HWW_MenuCreate::testimonial" sortOrder="10" action="menucreate/create/index" resource="HWW_MenuCreate::testimonial"/>
+    </menu>
+</config>

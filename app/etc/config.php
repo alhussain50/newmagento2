@@ -345,6 +345,7 @@ return [
         'Magento_WishlistGraphQl' => 1,
         'Magento_WishlistSampleData' => 1,
         'HWW_HelloWorld' => 1,
+        'HWW_MenuCreate' => 1,
         'Harriswebworks_Core' => 1,
         'Harriswebworks_AdobeSignCheckout' => 1,
         'HWW_testimonial' => 1,
