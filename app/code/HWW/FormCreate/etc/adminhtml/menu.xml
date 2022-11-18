@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../Magento/Backend/etc/menu.xsd">
+
+    <menu>
+        <add id="HWW_FormCreate::view" title="Testimonial Form" module="HWW_FormCreate" sortOrder="60" resource="HWW_FormCreate::view"/>
+        <add id="HWW_FormCreate::menu" title="Forms" module="HWW_FormCreate" sortOrder="20" parent="HWW_FormCreate::view" action="formcreate/index/index" resource="HWW_FormCreate::menu"/>
+    </menu>
+</config>
