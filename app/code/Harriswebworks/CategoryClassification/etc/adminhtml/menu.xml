@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Harriswebworks_CategoryClassification::hww_category" title="Category" module="Harriswebworks_CategoryClassification" sortOrder="10" resource="Harriswebworks_CategoryClassification::hww_category"/>
+        <add id="Harriswebworks_CategoryClassification::category" title="Category List" module="Harriswebworks_CategoryClassification" sortOrder="10" action="hww_category/catagory/index" resource="Harriswebworks_CategoryClassification::catagory" parent="Harriswebworks_CategoryClassification::hww_category"/>
+        <add id="Harriswebworks_CategoryClassification::item" title="Item List" module="Harriswebworks_CategoryClassification" sortOrder="20" action="hww_category/item/index" resource="Harriswebworks_CategoryClassification::item" parent="Harriswebworks_CategoryClassification::hww_category"/>
+    </menu>
+</config>
