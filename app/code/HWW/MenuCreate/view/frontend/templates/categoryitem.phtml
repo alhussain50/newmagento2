@@ -1,3 +1,23 @@
-<?php 
-    echo $block->getHeightData();
+<?php
+
+/**
+ * @var \HWW\MenuCreate\Block\Frontend\CategoryItem $block
+ */
+$items = $block->getItems();
+$category = $block->getCategory();
+?>
+
+<?php if (count($items)) { ?>
+    <div class="items">
+        <?php
+        foreach ($items as $item) {
+            echo '<div catagory-name=' . $item->getCategoryName() . ' class="item-id ' . strtolower(str_replace(' ', '_', $item->getCategoryName())) . '">
+                <h4 class="title">' . $item->getTitle() . '</h4>
+                <p class="description">' . $item->getDescription() . '</p>
+                </div>';
+        }
+        ?>
+    </div>
+<?php
+}
 ?>

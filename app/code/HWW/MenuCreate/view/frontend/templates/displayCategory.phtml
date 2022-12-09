@@ -4,11 +4,8 @@
  */
 $items = $block->getItems();
 $category = $block->getCategory();
-
 ?>
-
-<?php $total_count = count($category);?>
-
+<?php $total_count = count($category); ?>
 <?php if (count($category)) { ?>
     <div class="category">
         <?php echo "View:" ?>
@@ -26,92 +23,76 @@ $category = $block->getCategory();
                 }
                 ?>
             </a>
-            <?php
+        <?php
         }
         ?>
     </div>
-    <?php
+<?php
 }
 ?>
 
-<br/>
 <div class="search-bar" style="width: 300px">
     <div class="search-text">
-        <input id="search-id" type="text" placeholder="Search for..."/>
+        <input id="search-id" type="text" placeholder="Search for..." />
     </div>
     <input class="search-button" type="button" value="Search" />
 </div>
+
 <div class="ajax-content">
 </div>
 
-<?php if (count($items)) { ?>
-    <div class="items">
-        <?php
-        foreach ($items as $item) {
-            echo '<div catagory-name=' . $item->getCategoryName() . ' class="item-id ' . strtolower(str_replace(' ', '_', $item->getCategoryName())) . '">
-                <h4 class="title">' . $item->getTitle() . '</h4>
-                <p class="description">' . $item->getDescription() . '</p>
-                </div>';
-        }
-        ?>
-    </div>
-    <?php
-}
-?>
-
-
 <script>
-    require(['jquery', 'domReady!'], function ($) {
+    require(['jquery', 'domReady!'], function($) {
         function ajaxload() {
             var target = $(this);
-            var categoryName = target.attr('catagory-name');
+            // var categoryName = target.attr('category-name');
             var template = 'categoryitem.phtml';
             $.ajax({
                 type: "POST",
                 url: "<?= $block->getBaseUrl(); ?>menucreate/frontend/categoryitem",
-                data: {id: categoryName, template: template},
-                success: function (data) {
-                    if (data !== '') {
+                data: {
+                    // id: categoryName,
+                    template: template
+                },
+                success: function(data) {
+                    if (data != '') {
                         $('.ajax-content').append(data.output);
                     } else {
                         contentLocation.html("No Data");
                     }
-                    console.log(data);
+                    console.log(data.output);
                     console.log("success!");
                 },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
                     console.log('Error happens. Try again.');
                 }
             });
         }
-        $('.category a').on('click', function (e) {
-            e.preventDefault();
+
+        $(document).ready(function() {
             ajaxload();
-            // var template = 'displayCategory.phtml';
-            let href = $(this).attr("class");
-            console.log(href);
-            $(".items div").addClass('hidden');
-            $(".items div." + href).removeClass('hidden');
         });
 
+        $('.category a').on('click', function(e) {
+            e.preventDefault();
+            let href = $(this).attr("class");
+            console.log(href);
+            $(".ajax-content .items div").addClass('hidden');
+            $(".ajax-content .items ." + href).removeClass('hidden');
+        });
 
-        $('.search-button').click(function (e) {
+        $('.search-button').click(function(e) {
             e.preventDefault();
             var page = $('.item-id');
-            var showItem = $(this).attr("id");
             var pageText = page.text().replace("<span>", "").replace("</span>");
             var searchedText = $('#search-id').val();
             var theRegEx = new RegExp("(" + searchedText + ")", "igm");
             var newHtml = pageText.replace(theRegEx, "<span>$1</span>");
-            // $(".items span").css('background-color',"yellow");
+            //$(".ajax-content .items span").css('background-color',"yellow");
             console.log(newHtml);
-
-            page.each(function (index, element) {
+            page.each(function(index, element) {
                 let text = $(this).text();
                 let result = theRegEx.test(text);
-                console.log(result);
-                // console.log(page);
-
                 if (result) {
                     $(this).css('display', 'block');
                 } else {
@@ -119,18 +100,5 @@ $category = $block->getCategory();
                 }
             });
         });
-
-        // $('.search-button').click(function(e){
-        //     e.preventDefault();
-        //     var page = $('.items');
-        //     var pageText = page.text().replace("<span>","").replace("</span>");
-        //     var searchedText = $('#search-id').val();
-        //     var theRegEx = new RegExp("("+searchedText+")", "igm");
-        //     var newHtml = pageText.replace(theRegEx ,"<span>$1</span>");
-        //     page.html(newHtml);
-        //     console.log(newHtml);
-        // });
-
     });
-
 </script>
