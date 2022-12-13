@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var \HWW\MenuCreate\Block\Frontend\Display $block
  */
@@ -31,6 +32,8 @@ $category = $block->getCategory();
 }
 ?>
 
+
+
 <div class="search-bar" style="width: 300px">
     <div class="search-text">
         <input id="search-id" type="text" placeholder="Search for..." />
@@ -38,21 +41,38 @@ $category = $block->getCategory();
     <input class="search-button" type="button" value="Search" />
 </div>
 
+<div class="default-items">
+    <?php
+    foreach ($items as $item) {
+        if ($item->getCategoryName() == 'Glossary') {
+            echo '<div class="item-id">
+                <h4 class="title" >' . $item->getTitle() . '</h4>
+                <p class="description">' . $item->getDescription() . '</p>
+                </div>';
+        }
+    }
+    ?>
+</div>
+
 <div class="ajax-content">
 </div>
 
 <script>
     require(['jquery', 'domReady!'], function($) {
-        function ajaxload() {
-            var target = $(this);
-            // var categoryName = target.attr('category-name');
+        $('.category a').on('click', function(e) {
+            e.preventDefault();
+            $('.default-items').remove();
+            $('.ajax-content .items').remove();
+            let href = $(this).attr("class");
+            // console.log(href);
+
             var template = 'categoryitem.phtml';
+            console.log(href);
             $.ajax({
                 type: "POST",
                 url: "<?= $block->getBaseUrl(); ?>menucreate/frontend/categoryitem",
                 data: {
-                    // id: categoryName,
-                    template: template
+                    category: href,
                 },
                 success: function(data) {
                     if (data != '') {
@@ -67,38 +87,34 @@ $category = $block->getCategory();
                     console.log('Error happens. Try again.');
                 }
             });
-        }
-
-        $(document).ready(function() {
-            ajaxload();
-        });
-
-        $('.category a').on('click', function(e) {
-            e.preventDefault();
-            let href = $(this).attr("class");
-            console.log(href);
-            $(".ajax-content .items div").addClass('hidden');
-            $(".ajax-content .items ." + href).removeClass('hidden');
         });
 
         $('.search-button').click(function(e) {
             e.preventDefault();
+            $(".highlight").remove();
+
+            var searchword = $("#search-id").val();
+
+            var custfilter = new RegExp(searchword, "ig");
+            var repstr = "<span class='highlight'>" + searchword + "</span>";
+
+            if (searchword != "") {
+                $('body').each(function() {
+                    $(this).html($(this).html().replace(custfilter, repstr));
+                })
+            }
+
             var page = $('.item-id');
-            var pageText = page.text().replace("<span>", "").replace("</span>");
-            var searchedText = $('#search-id').val();
-            var theRegEx = new RegExp("(" + searchedText + ")", "igm");
-            var newHtml = pageText.replace(theRegEx, "<span>$1</span>");
-            //$(".ajax-content .items span").css('background-color',"yellow");
-            console.log(newHtml);
             page.each(function(index, element) {
                 let text = $(this).text();
-                let result = theRegEx.test(text);
+                let result = custfilter.test(text);
                 if (result) {
                     $(this).css('display', 'block');
                 } else {
                     $(this).css('display', 'none');
                 }
             });
+            
         });
     });
 </script>
