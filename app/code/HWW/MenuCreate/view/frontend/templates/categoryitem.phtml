@@ -6,8 +6,13 @@
 $items = $block->getItems();
 $category = $block->getCategory();
 $filtered_items = $block->getFilteredItems();
+$countItems = count($filtered_items);
 
 ?>
+
+<div class="count_items_ajax">
+    <p>There are currently <?php echo $countItems ?> names in this directory</p>
+</div>
 
 <?php if (count($filtered_items)) { ?>
     <div class="items">

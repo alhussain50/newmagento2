@@ -32,7 +32,23 @@ $category = $block->getCategory();
 }
 ?>
 
+<div class="first_letter_filter">
+    <a class="all" href="<?php echo $this->getUrl('menucreate/frontend/display'); ?>">All</a>
+    <?php echo " | "; ?>
+    <a class="#" href="<?php echo $this->getUrl('menucreate/frontend/display'); ?>">#</a>
+    <?php foreach (range('A', 'Z') as $elements) { ?>
+        <a class="<?php echo $elements ?>" href="<?php echo $this->getUrl('menucreate/frontend/display'); ?>">
+            <?php echo $elements . " " ?>
+        </a>
+    <?php
+    }
+    ?>
+</div>
 
+<!-- <div id="search-container" class="search-bar">
+    <input type="text" id="search-bar" class="search-text" placeholder="Search for..." />
+    <button type="button" id="search-button" class="search-button" value="Search">Search</button>
+</div> -->
 
 <div class="search-bar" style="width: 300px">
     <div class="search-text">
@@ -40,6 +56,17 @@ $category = $block->getCategory();
     </div>
     <input class="search-button" type="button" value="Search" />
 </div>
+
+<div class="count_contents_default">
+</div>
+
+<div class="count_letter_filtered_items">
+</div>
+
+<div class="count_searched_items">
+</div>
+
+
 
 <div class="default-items">
     <?php
@@ -59,10 +86,31 @@ $category = $block->getCategory();
 
 <script>
     require(['jquery', 'domReady!'], function($) {
+        var count_contents_default;
+        var numDiv = $('.item-id:visible').length;
+        $(".count_contents_default").html("There are currently " + numDiv + " names in this directory");
+        numDiv = 0;
+        // var repstr = "<span class='highlight'>" + searchword + "</span>";
+
         $('.category a').on('click', function(e) {
             e.preventDefault();
             $('.default-items').remove();
             $('.ajax-content .items').remove();
+            $('.ajax-content .count_items_ajax').remove();
+            count_contents_default = $('.count_contents_default').detach();
+            $(".count_letter_filtered_items").css('display', 'none');
+            // $('.count_letter_filtered_items').remove();
+            
+
+
+            // $(".items").each(function(index, element) {
+            //     numDiv++;
+            //     console.log(numDiv);
+            // });
+
+
+
+
             let href = $(this).attr("class");
             // console.log(href);
 
@@ -87,22 +135,41 @@ $category = $block->getCategory();
                     console.log('Error happens. Try again.');
                 }
             });
+
+            
         });
+
+        // in page search 
 
         $('.search-button').click(function(e) {
             e.preventDefault();
-            $(".highlight").remove();
+            $(".highlight").css("background-color", "transparent");
 
             var searchword = $("#search-id").val();
+            var newSearchword = searchword;
 
-            var custfilter = new RegExp(searchword, "ig");
+            var param;
+
+            // includes("^\\w+([-+.\\']\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
+
+            if (searchword.includes("+") || searchword.includes("++") || searchword.includes(".") || searchword.includes("(") || searchword.includes(")")) {
+                // newSearchword = newSearchword.replace(/\+/g, "\\+");
+                newSearchword = newSearchword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            }
+
+            var custfilter = new RegExp("(" + newSearchword + ")", "igm");
+
             var repstr = "<span class='highlight'>" + searchword + "</span>";
 
             if (searchword != "") {
-                $('body').each(function() {
+                $('.item-id').each(function() {
                     $(this).html($(this).html().replace(custfilter, repstr));
                 })
             }
+
+            console.log(searchword);
+            console.log(custfilter);
+            console.log(repstr);
 
             var page = $('.item-id');
             page.each(function(index, element) {
@@ -110,11 +177,47 @@ $category = $block->getCategory();
                 let result = custfilter.test(text);
                 if (result) {
                     $(this).css('display', 'block');
+                    numDiv++;
+                } else {
+                    $(this).css('display', 'none');
+                }
+            });
+            console.log(numDiv);
+
+        });
+
+        //Letterwise filter
+
+        $('.first_letter_filter a').on('click', function(e) {
+            e.preventDefault();
+            $(".count_letter_filtered_items").css('display', 'block');
+            $(".count_contents_default").css('display', 'none');
+            
+            // count_contents_default = $('.count_contents_default').detach();
+            $('.ajax-content .count_items_ajax').remove();
+            var href = $(this).attr("class");
+            var title = $('.title');
+            var page = $('.item-id');
+            page.each(function(index, element) {
+                var trimmedText = $(this).text().trim();
+                var test = $(this).text();
+                var filter = trimmedText.toString().startsWith(href);
+
+                if (filter || href == 'all') {
+                    $(this).css('display', 'block');
+                    numDiv++;
                 } else {
                     $(this).css('display', 'none');
                 }
             });
             
+            // $('.count_contents_default').append(data);
+
+            // $('div').prepend(count_contents_default);
+            $(".count_letter_filtered_items").html("There are currently " + numDiv + " names in this directory");
+            // console.log(numDiv);
+            numDiv = 0;
         });
+        
     });
 </script>
