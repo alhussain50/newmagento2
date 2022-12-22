@@ -99,6 +99,7 @@ $category = $block->getCategory();
             $('.ajax-content .count_items_ajax').remove();
             count_contents_default = $('.count_contents_default').detach();
             $(".count_letter_filtered_items").css('display', 'none');
+            $(".count_searched_items").css('display', 'none');
             // $('.count_letter_filtered_items').remove();
             
 
@@ -143,6 +144,12 @@ $category = $block->getCategory();
 
         $('.search-button').click(function(e) {
             e.preventDefault();
+            $(".count_searched_items").css('display', 'block');
+            $(".count_contents_default").css('display', 'none');
+            $(".count_letter_filtered_items").css('display', 'none');
+            $(".count_items_ajax").remove();
+
+
             $(".highlight").css("background-color", "transparent");
 
             var searchword = $("#search-id").val();
@@ -183,6 +190,8 @@ $category = $block->getCategory();
                 }
             });
             console.log(numDiv);
+            $(".count_searched_items").html("There are currently " + numDiv + " names in this directory");
+            numDiv = 0;
 
         });
 
@@ -192,6 +201,7 @@ $category = $block->getCategory();
             e.preventDefault();
             $(".count_letter_filtered_items").css('display', 'block');
             $(".count_contents_default").css('display', 'none');
+            $(".count_searched_items").css('display', 'none');
             
             // count_contents_default = $('.count_contents_default').detach();
             $('.ajax-content .count_items_ajax').remove();
