@@ -1,16 +1,16 @@
 <?php
 
-namespace RectorPrefix20211221\React\ChildProcess;
+namespace RectorPrefix202211\React\ChildProcess;
 
-use RectorPrefix20211221\Evenement\EventEmitter;
-use RectorPrefix20211221\React\EventLoop\Loop;
-use RectorPrefix20211221\React\EventLoop\LoopInterface;
-use RectorPrefix20211221\React\Stream\ReadableResourceStream;
-use RectorPrefix20211221\React\Stream\ReadableStreamInterface;
-use RectorPrefix20211221\React\Stream\WritableResourceStream;
-use RectorPrefix20211221\React\Stream\WritableStreamInterface;
-use RectorPrefix20211221\React\Stream\DuplexResourceStream;
-use RectorPrefix20211221\React\Stream\DuplexStreamInterface;
+use RectorPrefix202211\Evenement\EventEmitter;
+use RectorPrefix202211\React\EventLoop\Loop;
+use RectorPrefix202211\React\EventLoop\LoopInterface;
+use RectorPrefix202211\React\Stream\ReadableResourceStream;
+use RectorPrefix202211\React\Stream\ReadableStreamInterface;
+use RectorPrefix202211\React\Stream\WritableResourceStream;
+use RectorPrefix202211\React\Stream\WritableStreamInterface;
+use RectorPrefix202211\React\Stream\DuplexResourceStream;
+use RectorPrefix202211\React\Stream\DuplexStreamInterface;
 /**
  * Process component.
  *
@@ -55,7 +55,7 @@ use RectorPrefix20211221\React\Stream\DuplexStreamInterface;
  *     Accordingly, if either of these pipes is in a paused state (`pause()` method
  *     or internally due to a `pipe()` call), this detection may not trigger.
  */
-class Process extends \RectorPrefix20211221\Evenement\EventEmitter
+class Process extends EventEmitter
 {
     /**
      * @var WritableStreamInterface|null|DuplexStreamInterface|ReadableStreamInterface
@@ -151,12 +151,12 @@ class Process extends \RectorPrefix20211221\Evenement\EventEmitter
      * @param float          $interval    Interval to periodically monitor process state (seconds)
      * @throws \RuntimeException If the process is already running or fails to start
      */
-    public function start(\RectorPrefix20211221\React\EventLoop\LoopInterface $loop = null, $interval = 0.1)
+    public function start(LoopInterface $loop = null, $interval = 0.1)
     {
         if ($this->isRunning()) {
             throw new \RuntimeException('Process is already running');
         }
-        $loop = $loop ?: \RectorPrefix20211221\React\EventLoop\Loop::get();
+        $loop = $loop ?: Loop::get();
         $cmd = $this->cmd;
         $fdSpec = $this->fds;
         $sigchild = null;
@@ -180,10 +180,17 @@ class Process extends \RectorPrefix20211221\Evenement\EventEmitter
             $options['bypass_shell'] = \true;
             $options['suppress_errors'] = \true;
         }
+        $errstr = '';
+        \set_error_handler(function ($_, $error) use(&$errstr) {
+            // Match errstr from PHP's warning message.
+            // proc_open(/dev/does-not-exist): Failed to open stream: No such file or directory
+            $errstr = $error;
+        });
+        $pipes = array();
         $this->process = @\proc_open($cmd, $fdSpec, $pipes, $this->cwd, $this->env, $options);
+        \restore_error_handler();
         if (!\is_resource($this->process)) {
-            $error = \error_get_last();
-            throw new \RuntimeException('Unable to launch a new process: ' . $error['message']);
+            throw new \RuntimeException('Unable to launch a new process: ' . $errstr);
         }
         // count open process pipes and await close event for each to drain buffers before detecting exit
         $that = $this;
@@ -217,13 +224,13 @@ class Process extends \RectorPrefix20211221\Evenement\EventEmitter
             $meta = \stream_get_meta_data($fd);
             $mode = $meta['mode'] === '' ? $this->fds[$n][1] === 'r' ? 'w' : 'r' : $meta['mode'];
             if ($mode === 'r+') {
-                $stream = new \RectorPrefix20211221\React\Stream\DuplexResourceStream($fd, $loop);
+                $stream = new DuplexResourceStream($fd, $loop);
                 $stream->on('close', $streamCloseHandler);
                 $closeCount++;
             } elseif ($mode === 'w') {
-                $stream = new \RectorPrefix20211221\React\Stream\WritableResourceStream($fd, $loop);
+                $stream = new WritableResourceStream($fd, $loop);
             } else {
-                $stream = new \RectorPrefix20211221\React\Stream\ReadableResourceStream($fd, $loop);
+                $stream = new ReadableResourceStream($fd, $loop);
                 $stream->on('close', $streamCloseHandler);
                 $closeCount++;
             }

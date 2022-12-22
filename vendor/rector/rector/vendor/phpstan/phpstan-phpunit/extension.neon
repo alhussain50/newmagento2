@@ -12,6 +12,7 @@ parameters:
 		- stubs/InvocationMocker.stub
 		- stubs/MockBuilder.stub
 		- stubs/MockObject.stub
+		- stubs/Stub.stub
 		- stubs/TestCase.stub
 	exceptions:
 		uncheckedExceptionRegexes:
@@ -50,6 +51,10 @@ services:
 		class: PHPStan\Type\PHPUnit\MockObjectDynamicReturnTypeExtension
 		tags:
 			- phpstan.broker.dynamicMethodReturnTypeExtension
+	-
+		class: PHPStan\Rules\PHPUnit\CoversHelper
+	-
+		class: PHPStan\Rules\PHPUnit\AnnotationHelper
 
 conditionalTags:
 	PHPStan\PhpDoc\PHPUnit\MockObjectTypeNodeResolverExtension:

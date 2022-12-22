@@ -7,7 +7,6 @@ use PhpParser\Node\Stmt;
 use Rector\ChangesReporting\ValueObject\RectorWithLineChange;
 use Rector\Core\Exception\ShouldNotHappenException;
 use Rector\Core\ValueObject\Reporting\FileDiff;
-use Symplify\SmartFileSystem\SmartFileInfo;
 /**
  * @see \Rector\Core\ValueObjectFactory\Application\FileFactory
  */
@@ -44,26 +43,22 @@ final class File
     private $rectorWithLineChanges = [];
     /**
      * @readonly
-     * @var \Symplify\SmartFileSystem\SmartFileInfo
+     * @var string
      */
-    private $smartFileInfo;
+    private $filepath;
     /**
      * @var string
      */
     private $fileContent;
-    public function __construct(\Symplify\SmartFileSystem\SmartFileInfo $smartFileInfo, string $fileContent)
+    public function __construct(string $filepath, string $fileContent)
     {
-        $this->smartFileInfo = $smartFileInfo;
+        $this->filepath = $filepath;
         $this->fileContent = $fileContent;
         $this->originalFileContent = $fileContent;
     }
     public function getFilePath() : string
     {
-        return $this->smartFileInfo->getRealPath();
-    }
-    public function getSmartFileInfo() : \Symplify\SmartFileSystem\SmartFileInfo
-    {
-        return $this->smartFileInfo;
+        return $this->filepath;
     }
     public function getFileContent() : string
     {
@@ -93,11 +88,11 @@ final class File
     {
         $this->hasChanged = $status;
     }
-    public function setFileDiff(\Rector\Core\ValueObject\Reporting\FileDiff $fileDiff) : void
+    public function setFileDiff(FileDiff $fileDiff) : void
     {
         $this->fileDiff = $fileDiff;
     }
-    public function getFileDiff() : ?\Rector\Core\ValueObject\Reporting\FileDiff
+    public function getFileDiff() : ?FileDiff
     {
         return $this->fileDiff;
     }
@@ -109,7 +104,7 @@ final class File
     public function hydrateStmtsAndTokens(array $newStmts, array $oldStmts, array $oldTokens) : void
     {
         if ($this->oldStmts !== []) {
-            throw new \Rector\Core\Exception\ShouldNotHappenException('Double stmts override');
+            throw new ShouldNotHappenException('Double stmts override');
         }
         $this->oldStmts = $oldStmts;
         $this->newStmts = $newStmts;
@@ -143,7 +138,7 @@ final class File
     {
         $this->newStmts = $newStmts;
     }
-    public function addRectorClassWithLine(\Rector\ChangesReporting\ValueObject\RectorWithLineChange $rectorWithLineChange) : void
+    public function addRectorClassWithLine(RectorWithLineChange $rectorWithLineChange) : void
     {
         $this->rectorWithLineChanges[] = $rectorWithLineChange;
     }
@@ -153,9 +148,5 @@ final class File
     public function getRectorWithLineChanges() : array
     {
         return $this->rectorWithLineChanges;
-    }
-    public function getRelativeFilePath() : string
-    {
-        return $this->smartFileInfo->getRelativeFilePathFromCwd();
     }
 }

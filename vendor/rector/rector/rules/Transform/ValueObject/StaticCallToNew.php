@@ -20,7 +20,8 @@ final class StaticCallToNew
     {
         $this->class = $class;
         $this->method = $method;
-        \Rector\Core\Validation\RectorAssert::className($class);
+        RectorAssert::className($class);
+        RectorAssert::methodName($method);
     }
     public function getClass() : string
     {

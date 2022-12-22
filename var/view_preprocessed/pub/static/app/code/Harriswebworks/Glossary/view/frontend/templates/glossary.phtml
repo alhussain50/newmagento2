@@ -1,0 +1,42 @@
+<ul class="category-list"><li><a href="glossary">Glossary</a></li> <li><a href="acronyms">Acronyms</a></li> <li><a href="military_specifications_for_connectors">Military Specifications for Connectors</a></li></ul><ul class="alphabet-list"><li><a href="a">A</a></li> <li><a href="b">B</a></li> <li><a href="c">C</a></li></ul><!-- <script>
+const buttons = document.getElementsByTagName("button");
+const result = document.getElementById("result");
+
+const buttonPressed = e => {
+  console.log(e.target.id);  
+  var value = e.target.id;
+  
+  if(value=='a'){
+    console.log('yes');
+  }
+}
+for (let button of buttons) {
+  button.addEventListener("click", buttonPressed);
+} -->
+<!--</script> --><table><tr><th class="post-id">Id</th><th>Category</th><th class="post-name">Title</th><th>Description</th></tr><?php foreach ($block->getPostCollection() as $key=>$post){ $test = $post->getTitle(); if($test[0]=='t'){ echo '<tr class="'.strtolower(str_replace(' ', '_', $post->getCategory())).'"><td>'.$post->getGlossaryId().'</td><td>'.$post->getCategory().'</td><td class="title">'.$post->getTitle().'</td><td>'.$post->getDescription().'</td></tr>'; } } ?></table></body></html><style> .hidden { display: none; }</style><script>
+  require(['jquery'], function($) {
+    $(document).ready(function(){
+      $('.category-list li a').on('click', function(e){
+        e.preventDefault();
+        let href = $(this).attr("href");
+        console.log(href)
+        $("table tr").addClass('hidden');
+        $("table tr." + href).removeClass('hidden');
+      });
+    });
+  });
+
+  require(['jquery'], function($) {
+    $(document).ready(function(){
+      $('.alphabet-list li a').on('click', function(e){
+        e.preventDefault();
+        let href = $(this).attr("href");
+        console.log(href)
+        if("table td:first" == href){
+          
+        }
+        $("table td").addClass('hidden');
+        $("table td." + href).removeClass('hidden');
+      });
+    });
+  });</script>

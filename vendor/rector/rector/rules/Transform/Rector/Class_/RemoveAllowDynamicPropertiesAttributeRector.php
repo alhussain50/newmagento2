@@ -8,20 +8,17 @@ use PhpParser\Node\Stmt\Class_;
 use Rector\Core\Contract\Rector\AllowEmptyConfigurableRectorInterface;
 use Rector\Core\Rector\AbstractRector;
 use Rector\Php80\NodeAnalyzer\PhpAttributeAnalyzer;
+use Rector\Php81\Enum\AttributeName;
 use Symplify\RuleDocGenerator\ValueObject\CodeSample\ConfiguredCodeSample;
 use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
-use RectorPrefix20211221\Webmozart\Assert\Assert;
+use RectorPrefix202211\Webmozart\Assert\Assert;
 /**
  * @changelog https://wiki.php.net/rfc/deprecate_dynamic_properties
  *
  * @see \Rector\Tests\Transform\Rector\Class_\RemoveAllowDynamicPropertiesAttributeRector\RemoveAllowDynamicPropertiesAttributeRectorTest
  */
-final class RemoveAllowDynamicPropertiesAttributeRector extends \Rector\Core\Rector\AbstractRector implements \Rector\Core\Contract\Rector\AllowEmptyConfigurableRectorInterface
+final class RemoveAllowDynamicPropertiesAttributeRector extends AbstractRector implements AllowEmptyConfigurableRectorInterface
 {
-    /**
-     * @var string
-     */
-    private const ATTRIBUTE = 'AllowDynamicProperties';
     /**
      * @var array<array-key, string>
      */
@@ -31,13 +28,13 @@ final class RemoveAllowDynamicPropertiesAttributeRector extends \Rector\Core\Rec
      * @var \Rector\Php80\NodeAnalyzer\PhpAttributeAnalyzer
      */
     private $phpAttributeAnalyzer;
-    public function __construct(\Rector\Php80\NodeAnalyzer\PhpAttributeAnalyzer $phpAttributeAnalyzer)
+    public function __construct(PhpAttributeAnalyzer $phpAttributeAnalyzer)
     {
         $this->phpAttributeAnalyzer = $phpAttributeAnalyzer;
     }
-    public function getRuleDefinition() : \Symplify\RuleDocGenerator\ValueObject\RuleDefinition
+    public function getRuleDefinition() : RuleDefinition
     {
-        return new \Symplify\RuleDocGenerator\ValueObject\RuleDefinition('Remove the `AllowDynamicProperties` attribute from all classes', [new \Symplify\RuleDocGenerator\ValueObject\CodeSample\ConfiguredCodeSample(<<<'CODE_SAMPLE'
+        return new RuleDefinition('Remove the `AllowDynamicProperties` attribute from all classes', [new ConfiguredCodeSample(<<<'CODE_SAMPLE'
 namespace Example\Domain;
 
 #[AllowDynamicProperties]
@@ -59,31 +56,31 @@ CODE_SAMPLE
      */
     public function getNodeTypes() : array
     {
-        return [\PhpParser\Node\Stmt\Class_::class];
+        return [Class_::class];
     }
     public function configure(array $configuration) : void
     {
         $transformOnNamespaces = $configuration;
-        \RectorPrefix20211221\Webmozart\Assert\Assert::allString($transformOnNamespaces);
+        Assert::allString($transformOnNamespaces);
         $this->transformOnNamespaces = $transformOnNamespaces;
     }
     /**
      * @param Class_ $node
      */
-    public function refactor(\PhpParser\Node $node) : ?\PhpParser\Node
+    public function refactor(Node $node) : ?Node
     {
         if ($this->shouldRemove($node)) {
             return $this->removeAllowDynamicPropertiesAttribute($node);
         }
         return null;
     }
-    private function removeAllowDynamicPropertiesAttribute(\PhpParser\Node\Stmt\Class_ $class) : \PhpParser\Node\Stmt\Class_
+    private function removeAllowDynamicPropertiesAttribute(Class_ $class) : Class_
     {
         $newAttrGroups = [];
         foreach ($class->attrGroups as $attrGroup) {
             $newAttrs = [];
             foreach ($attrGroup->attrs as $attribute) {
-                if (!$this->nodeNameResolver->isName($attribute, self::ATTRIBUTE)) {
+                if (!$this->nodeNameResolver->isName($attribute, AttributeName::ALLOW_DYNAMIC_PROPERTIES)) {
                     $newAttrs[] = $attribute;
                 }
             }
@@ -95,7 +92,7 @@ CODE_SAMPLE
         $class->attrGroups = $newAttrGroups;
         return $class;
     }
-    private function shouldRemove(\PhpParser\Node\Stmt\Class_ $class) : bool
+    private function shouldRemove(Class_ $class) : bool
     {
         if ($this->transformOnNamespaces !== []) {
             $className = (string) $this->nodeNameResolver->getName($class);
@@ -105,6 +102,6 @@ CODE_SAMPLE
                 }
             }
         }
-        return $this->phpAttributeAnalyzer->hasPhpAttribute($class, self::ATTRIBUTE);
+        return $this->phpAttributeAnalyzer->hasPhpAttribute($class, AttributeName::ALLOW_DYNAMIC_PROPERTIES);
     }
 }

@@ -3,104 +3,87 @@
 declare (strict_types=1);
 namespace Rector\Core\Console\Command;
 
-use RectorPrefix20211221\Nette\Utils\Strings;
-use Rector\Core\Configuration\Option;
-use Rector\Core\Contract\Template\TemplateResolverInterface;
-use Rector\Core\Exception\Template\TemplateTypeNotFoundException;
+use RectorPrefix202211\Nette\Utils\FileSystem;
+use RectorPrefix202211\Nette\Utils\Strings;
+use Rector\Core\Contract\Console\OutputStyleInterface;
+use Rector\Core\FileSystem\InitFilePathsResolver;
 use Rector\Core\Php\PhpVersionProvider;
-use Rector\Core\Template\DefaultResolver;
-use Stringable;
-use RectorPrefix20211221\Symfony\Component\Console\Command\Command;
-use RectorPrefix20211221\Symfony\Component\Console\Input\InputInterface;
-use RectorPrefix20211221\Symfony\Component\Console\Input\InputOption;
-use RectorPrefix20211221\Symfony\Component\Console\Output\OutputInterface;
-use RectorPrefix20211221\Symfony\Component\Console\Style\SymfonyStyle;
-use RectorPrefix20211221\Symplify\SmartFileSystem\FileSystemGuard;
-use RectorPrefix20211221\Symplify\SmartFileSystem\SmartFileSystem;
-final class InitCommand extends \RectorPrefix20211221\Symfony\Component\Console\Command\Command
+use RectorPrefix202211\Symfony\Component\Console\Command\Command;
+use RectorPrefix202211\Symfony\Component\Console\Input\InputInterface;
+use RectorPrefix202211\Symfony\Component\Console\Output\OutputInterface;
+final class InitCommand extends Command
 {
     /**
-     * @readonly
-     * @var \Symplify\SmartFileSystem\FileSystemGuard
+     * @var string
      */
-    private $fileSystemGuard;
+    private const TEMPLATE_PATH = __DIR__ . '/../../../templates/rector.php.dist';
     /**
      * @readonly
-     * @var \Symplify\SmartFileSystem\SmartFileSystem
+     * @var \Symfony\Component\Filesystem\Filesystem
      */
-    private $smartFileSystem;
+    private $filesystem;
     /**
      * @readonly
-     * @var \Symfony\Component\Console\Style\SymfonyStyle
+     * @var \Rector\Core\Contract\Console\OutputStyleInterface
      */
-    private $symfonyStyle;
-    /**
-     * @var \Rector\Core\Contract\Template\TemplateResolverInterface[]
-     * @readonly
-     */
-    private $templateResolvers;
+    private $rectorOutputStyle;
     /**
      * @readonly
      * @var \Rector\Core\Php\PhpVersionProvider
      */
     private $phpVersionProvider;
     /**
-     * @param TemplateResolverInterface[] $templateResolvers
+     * @readonly
+     * @var \Rector\Core\FileSystem\InitFilePathsResolver
      */
-    public function __construct(\RectorPrefix20211221\Symplify\SmartFileSystem\FileSystemGuard $fileSystemGuard, \RectorPrefix20211221\Symplify\SmartFileSystem\SmartFileSystem $smartFileSystem, \RectorPrefix20211221\Symfony\Component\Console\Style\SymfonyStyle $symfonyStyle, array $templateResolvers, \Rector\Core\Php\PhpVersionProvider $phpVersionProvider)
+    private $initFilePathsResolver;
+    public function __construct(\RectorPrefix202211\Symfony\Component\Filesystem\Filesystem $filesystem, OutputStyleInterface $rectorOutputStyle, PhpVersionProvider $phpVersionProvider, InitFilePathsResolver $initFilePathsResolver)
     {
-        $this->fileSystemGuard = $fileSystemGuard;
-        $this->smartFileSystem = $smartFileSystem;
-        $this->symfonyStyle = $symfonyStyle;
-        $this->templateResolvers = $templateResolvers;
+        $this->filesystem = $filesystem;
+        $this->rectorOutputStyle = $rectorOutputStyle;
         $this->phpVersionProvider = $phpVersionProvider;
+        $this->initFilePathsResolver = $initFilePathsResolver;
         parent::__construct();
+    }
+    protected function execute(InputInterface $input, OutputInterface $output) : int
+    {
+        $projectDirectory = \getcwd();
+        $rectorRootFilePath = $projectDirectory . '/rector.php';
+        $doesFileExist = $this->filesystem->exists($rectorRootFilePath);
+        if ($doesFileExist) {
+            $this->rectorOutputStyle->note('Config file "rector.php" already exists');
+        } else {
+            $rectorPhpTemplateContents = FileSystem::read(self::TEMPLATE_PATH);
+            $rectorPhpTemplateContents = $this->replacePhpLevelContents($rectorPhpTemplateContents);
+            $rectorPhpTemplateContents = $this->replacePathsContents($rectorPhpTemplateContents, $projectDirectory);
+            $this->filesystem->dumpFile($rectorRootFilePath, $rectorPhpTemplateContents);
+            $this->rectorOutputStyle->success('"rector.php" config file was added');
+        }
+        return Command::SUCCESS;
     }
     protected function configure() : void
     {
+        $this->setName('init');
         $this->setDescription('Generate rector.php configuration file');
-        $this->addOption(\Rector\Core\Configuration\Option::TEMPLATE_TYPE, null, \RectorPrefix20211221\Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'A template type like default, nette, doctrine etc.', \Rector\Core\Template\DefaultResolver::TYPE);
     }
-    protected function execute(\RectorPrefix20211221\Symfony\Component\Console\Input\InputInterface $input, \RectorPrefix20211221\Symfony\Component\Console\Output\OutputInterface $output) : int
+    private function replacePhpLevelContents(string $rectorPhpTemplateContents) : string
     {
-        $templateType = (string) $input->getOption(\Rector\Core\Configuration\Option::TEMPLATE_TYPE);
-        $rectorTemplateFilePath = $this->resolveTemplateFilePathByType($templateType);
-        $this->fileSystemGuard->ensureFileExists($rectorTemplateFilePath, __METHOD__);
-        $rectorRootFilePath = \getcwd() . '/rector.php';
-        $doesFileExist = $this->smartFileSystem->exists($rectorRootFilePath);
-        if ($doesFileExist) {
-            $this->symfonyStyle->warning('Config file "rector.php" already exists');
-        } else {
-            $this->smartFileSystem->copy($rectorTemplateFilePath, $rectorRootFilePath);
-            $fullPHPVersion = (string) $this->phpVersionProvider->provide();
-            $phpVersion = \RectorPrefix20211221\Nette\Utils\Strings::substring($fullPHPVersion, 0, 1) . \RectorPrefix20211221\Nette\Utils\Strings::substring($fullPHPVersion, 2, 1);
-            $fileContent = $this->smartFileSystem->readFile($rectorRootFilePath);
-            $fileContent = \str_replace('LevelSetList::UP_TO_PHP_XY', \sprintf('LevelSetList::UP_TO_PHP_%d', $phpVersion), $fileContent);
-            $this->smartFileSystem->dumpFile($rectorRootFilePath, $fileContent);
-            $this->symfonyStyle->success('"rector.php" config file was added');
-        }
-        return \RectorPrefix20211221\Symfony\Component\Console\Command\Command::SUCCESS;
+        $fullPHPVersion = (string) $this->phpVersionProvider->provide();
+        $phpVersion = Strings::substring($fullPHPVersion, 0, 1) . Strings::substring($fullPHPVersion, 2, 1);
+        return \str_replace('LevelSetList::UP_TO_PHP_XY', 'LevelSetList::UP_TO_PHP_' . $phpVersion, $rectorPhpTemplateContents);
     }
-    private function resolveTemplateFilePathByType(string $templateType) : string
+    private function replacePathsContents(string $rectorPhpTemplateContents, string $projectDirectory) : string
     {
-        $rectorTemplateFilePath = null;
-        foreach ($this->templateResolvers as $templateResolver) {
-            if ($templateResolver->supports($templateType)) {
-                $rectorTemplateFilePath = $templateResolver->provide();
-                break;
-            }
+        $projectPhpDirectories = $this->initFilePathsResolver->resolve($projectDirectory);
+        // fallback to default 'src' in case of empty one
+        if ($projectPhpDirectories === []) {
+            $projectPhpDirectories[] = 'src';
         }
-        if ($rectorTemplateFilePath === null) {
-            $templateResolverTypes = [];
-            foreach ($this->templateResolvers as $templateResolver) {
-                if (\method_exists($templateResolver, 'getType')) {
-                    $templateResolverTypes[] = $templateResolver->getType();
-                } elseif ($templateResolver instanceof \Stringable) {
-                    $templateResolverTypes[] = (string) $templateResolver;
-                }
-            }
-            throw new \Rector\Core\Exception\Template\TemplateTypeNotFoundException($templateType, $templateResolverTypes);
+        $projectPhpDirectoriesContents = '';
+        foreach ($projectPhpDirectories as $projectPhpDirectory) {
+            $projectPhpDirectoriesContents .= "        __DIR__ . '/" . $projectPhpDirectory . "'," . \PHP_EOL;
         }
-        return $rectorTemplateFilePath;
+        $projectPhpDirectoriesContents = \rtrim($projectPhpDirectoriesContents);
+        return \str_replace('__PATHS__', $projectPhpDirectoriesContents, $rectorPhpTemplateContents);
     }
 }

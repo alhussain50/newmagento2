@@ -2,33 +2,33 @@
 
 namespace HWW\MenuCreate\Ui\Category;
 
-use HWW\MenuCreate\Model\ResourceModel\Category\Collection;
+use HWW\MenuCreate\Model\ResourceModel\Category\CollectionFactory;
+
 use Magento\Ui\DataProvider\AbstractDataProvider;
 
-class DataProvider extends AbstractDataProvider
-{
+class DataProvider extends AbstractDataProvider {
+
     protected $collection;
 
     public function __construct(
-        $name,
-        $primaryFieldName,
-        $requestFieldName,
-        Collection $collectionFactory,
-        array $meta = [],
-        array $data = []
+            $name,
+            $primaryFieldName,
+            $requestFieldName,
+            CollectionFactory $collectionFactory,
+            array $meta = [],
+            array $data = []
     ) {
-        parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
         $this->collection = $collectionFactory->create();
-        // var_dump(is_array($collectionFactory->create()));exit;
+        parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
+
+        // var_dump($collectionFactory->create());exit;
     }
-    
-    public function addFilter(\Magento\Framework\Api\Filter $filter)
-    {
+
+    public function addFilter(\Magento\Framework\Api\Filter $filter) {
         return null;
     }
 
-    public function getData()
-    {
+    public function getData() {
         $result = [];
         // var_dump($this->collection);exit;
         // foreach ($this->collection->getItems() as $item) {
@@ -36,4 +36,5 @@ class DataProvider extends AbstractDataProvider
         // }
         return $result;
     }
+
 }

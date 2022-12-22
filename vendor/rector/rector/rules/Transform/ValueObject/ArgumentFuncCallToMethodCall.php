@@ -5,7 +5,7 @@ namespace Rector\Transform\ValueObject;
 
 use Rector\Core\Validation\RectorAssert;
 use Rector\Transform\Contract\ValueObject\ArgumentFuncCallToMethodCallInterface;
-final class ArgumentFuncCallToMethodCall implements \Rector\Transform\Contract\ValueObject\ArgumentFuncCallToMethodCallInterface
+final class ArgumentFuncCallToMethodCall implements ArgumentFuncCallToMethodCallInterface
 {
     /**
      * @readonly
@@ -33,7 +33,8 @@ final class ArgumentFuncCallToMethodCall implements \Rector\Transform\Contract\V
         $this->class = $class;
         $this->methodIfArgs = $methodIfArgs;
         $this->methodIfNoArgs = $methodIfNoArgs;
-        \Rector\Core\Validation\RectorAssert::className($class);
+        RectorAssert::className($class);
+        RectorAssert::functionName($function);
     }
     public function getFunction() : string
     {

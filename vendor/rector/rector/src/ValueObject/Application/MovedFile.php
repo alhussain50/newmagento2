@@ -5,7 +5,7 @@ namespace Rector\Core\ValueObject\Application;
 
 use PhpParser\Node\Stmt;
 use Rector\FileSystemRector\Contract\FileWithNodesInterface;
-final class MovedFile implements \Rector\FileSystemRector\Contract\FileWithNodesInterface
+final class MovedFile implements FileWithNodesInterface
 {
     /**
      * @readonly
@@ -39,7 +39,6 @@ final class MovedFile implements \Rector\FileSystemRector\Contract\FileWithNodes
     }
     public function getFilePath() : string
     {
-        $smartFileInfo = $this->file->getSmartFileInfo();
-        return $smartFileInfo->getRelativeFilePath();
+        return $this->file->getFilePath();
     }
 }

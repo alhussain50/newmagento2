@@ -1,0 +1,44 @@
+@toogas-icons-admin__font-name-path: '@{baseDir}Toogas_AbTesting/fonts/toogas-icon';
+@toogas-icons-icons-admin__font-name : 'toogas-icon';
+.lib-font-face(
+    @family-name:@toogas-icons-icons-admin__font-name,
+    @font-path: @toogas-icons-admin__font-name-path,
+    @font-weight: normal,
+    @font-style: normal
+);
+
+.admin {
+    &__menu {
+        .item-marketing {
+            [data-ui-id='menu-toogas-abtesting-management'] {
+                .submenu-group-title {
+                    &:before {
+                        content: '.';
+                        font-family: @toogas-icons-icons-admin__font-name;
+                        font-size: 23px;
+                        padding-right: @indent__s;
+                        vertical-align: middle;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.fieldset-wrapper {
+    .chart-container {
+        height: 400px;
+        position: relative;
+    }
+
+    .top-chart-container {
+        .lib-vendor-prefix-display(grid);
+        grid-template-columns: 25% 25% 25% 25%;
+        margin-bottom: @indent__base !important; // override admin fieldset style
+
+        .chart-container {
+            text-align: center;
+            height: 200px;
+        }
+    }
+}

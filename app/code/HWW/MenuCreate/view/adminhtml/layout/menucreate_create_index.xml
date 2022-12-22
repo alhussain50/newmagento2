@@ -4,5 +4,8 @@
        <referenceContainer name="content">
             <block class="Magento\Backend\Block\Template" template="HWW_MenuCreate::helloworld.phtml"/>
        </referenceContainer>
+       <referenceContainer name="content">
+            <uiComponent name = "hww_item_grid"/>
+       </referenceContainer>
    </body>
 </page>

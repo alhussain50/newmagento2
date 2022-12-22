@@ -23,8 +23,8 @@ final class ReplaceStringWithClassConstant
      */
     private $argPosition;
     /**
-     * @var class-string
      * @readonly
+     * @var string
      */
     private $classWithConstants;
     /**
@@ -32,9 +32,6 @@ final class ReplaceStringWithClassConstant
      * @var bool
      */
     private $caseInsensitive = \false;
-    /**
-     * @param class-string $classWithConstants
-     */
     public function __construct(string $class, string $method, int $argPosition, string $classWithConstants, bool $caseInsensitive = \false)
     {
         $this->class = $class;
@@ -42,11 +39,13 @@ final class ReplaceStringWithClassConstant
         $this->argPosition = $argPosition;
         $this->classWithConstants = $classWithConstants;
         $this->caseInsensitive = $caseInsensitive;
-        \Rector\Core\Validation\RectorAssert::className($class);
+        RectorAssert::className($class);
+        RectorAssert::methodName($method);
+        RectorAssert::className($classWithConstants);
     }
-    public function getObjectType() : \PHPStan\Type\ObjectType
+    public function getObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->class);
+        return new ObjectType($this->class);
     }
     public function getMethod() : string
     {

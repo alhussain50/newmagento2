@@ -1,4 +1,4 @@
-# 39 Rules Overview
+# 42 Rules Overview
 
 ## AddDoesNotPerformAssertionToNonAssertingTestRector
 
@@ -78,20 +78,12 @@ Move array argument from tests into data provider [configurable]
 - class: [`Rector\PHPUnit\Rector\Class_\ArrayArgumentToDataProviderRector`](../src/Rector/Class_/ArrayArgumentToDataProviderRector.php)
 
 ```php
+use Rector\Config\RectorConfig;
 use Rector\PHPUnit\Rector\Class_\ArrayArgumentToDataProviderRector;
 use Rector\PHPUnit\ValueObject\ArrayArgumentToDataProvider;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symplify\SymfonyPhpConfig\ValueObjectInliner;
 
-return static function (ContainerConfigurator $containerConfigurator): void {
-    $services = $containerConfigurator->services();
-
-    $services->set(ArrayArgumentToDataProviderRector::class)
-        ->configure([
-ArrayArgumentToDataProviderRector::ARRAY_ARGUMENTS_TO_DATA_PROVIDERS => ValueObjectInliner::inline([
-    new ArrayArgumentToDataProvider('PHPUnit\Framework\TestCase', 'doTestMultiple', 'doTestSingle', 'number'),
-    ]),
-]]);
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->ruleWithConfiguration(ArrayArgumentToDataProviderRector::class, [Rector\PHPUnit\Rector\Class_\ArrayArgumentToDataProviderRector::ARRAY_ARGUMENTS_TO_DATA_PROVIDERS: [new ArrayArgumentToDataProvider('PHPUnit\Framework\TestCase', 'doTestMultiple', 'doTestSingle', 'number')]]);
 };
 ```
 
@@ -446,6 +438,35 @@ Change `__construct()` method in tests of `PHPUnit\Framework\TestCase` to `setUp
 
 <br>
 
+## CreateMockToAnonymousClassRector
+
+Change `$this->createMock()` with methods to direct anonymous class.
+
+- class: [`Rector\PHPUnit\Rector\ClassMethod\CreateMockToAnonymousClassRector`](../src/Rector/ClassMethod/CreateMockToAnonymousClassRector.php)
+
+```diff
+use PHPUnit\Framework\TestCase;
+
+final class SomeTest extends TestCase
+{
+    public function test()
+    {
+-       $someMockObject = $this->createMock(SomeClass::class);
+-
+-       $someMockObject->method('someMethod')
+-           ->willReturn(100);
++       $someMockObject = new class extends SomeClass {
++           public function someMethod()
++           {
++               return 100;
++           }
+        };
+    }
+}
+```
+
+<br>
+
 ## CreateMockToCreateStubRector
 
 Replaces `createMock()` with `createStub()` when relevant
@@ -579,17 +600,26 @@ Turns getMock*() methods to `createMock()`
 
 <br>
 
-## MigrateAtToConsecutiveExpectationsRector
+## ProphecyPHPDocRector
 
-Migrates deprecated `$this->at` to `$this->withConsecutive` and `$this->willReturnOnConsecutiveCalls`
+Add correct `@var` to ObjectProphecy instances based on `$this->prophesize()` call.`
 
-- class: [`Rector\PHPUnit\Rector\ClassMethod\MigrateAtToConsecutiveExpectationsRector`](../src/Rector/ClassMethod/MigrateAtToConsecutiveExpectationsRector.php)
+- class: [`Rector\PHPUnit\Rector\Class_\ProphecyPHPDocRector`](../src/Rector/Class_/ProphecyPHPDocRector.php)
 
 ```diff
- $mock = $this->createMock(Foo::class);
--$mock->expects($this->at(0))->with('0')->method('someMethod')->willReturn('1');
--$mock->expects($this->at(1))->with('1')->method('someMethod')->willReturn('2');
-+$mock->method('someMethod')->withConsecutive(['0'], ['1'])->willReturnOnConsecutiveCalls('1', '2');
+class HelloTest extends TestCase
+{
+    /**
+-    * @var SomeClass
++    * @var ObjectProphecy<SomeClass>
+     */
+    private $propesizedObject;
+
+    public function setUp(): void
+    {
+        $this->propesizedObject = $this->prophesize(SomeClass::class);
+    }
+}
 ```
 
 <br>
@@ -668,6 +698,28 @@ Remove `expect($this->any())` from mocks as it has no added value
 
 <br>
 
+## RemoveSetMethodsMethodCallRector
+
+Remove `"setMethods()"` method as never used
+
+- class: [`Rector\PHPUnit\Rector\MethodCall\RemoveSetMethodsMethodCallRector`](../src/Rector/MethodCall/RemoveSetMethodsMethodCallRector.php)
+
+```diff
+ use PHPUnit\Framework\TestCase;
+
+ final class SomeTest extends TestCase
+ {
+     public function test()
+     {
+         $someMock = $this->getMockBuilder(SomeClass::class)
+-            ->setMethods(['run'])
+             ->getMock();
+     }
+ }
+```
+
+<br>
+
 ## ReplaceAssertArraySubsetWithDmsPolyfillRector
 
 Change `assertArraySubset()` to static call of DMS\PHPUnitExtensions\ArraySubset\Assert
@@ -686,6 +738,28 @@ Change `assertArraySubset()` to static call of DMS\PHPUnitExtensions\ArraySubset
 
 -        $this->assertArraySubset(['bar' => 0], ['bar' => '0'], true);
 +        \DMS\PHPUnitExtensions\ArraySubset\Assert::assertArraySubset(['bar' => 0], ['bar' => '0'], true);
+     }
+ }
+```
+
+<br>
+
+## ReplaceTestAnnotationWithPrefixedFunctionRector
+
+Replace `@test` with prefixed function
+
+- class: [`Rector\PHPUnit\Rector\ClassMethod\ReplaceTestAnnotationWithPrefixedFunctionRector`](../src/Rector/ClassMethod/ReplaceTestAnnotationWithPrefixedFunctionRector.php)
+
+```diff
+ class SomeTest extends \PHPUnit\Framework\TestCase
+ {
+-    /**
+-     * @test
+-     */
+-    public function onePlusOneShouldBeTwo()
++    public function testOnePlusOneShouldBeTwo()
+     {
+         $this->assertSame(2, 1+1);
      }
  }
 ```
@@ -879,32 +953,25 @@ Changes `->will($this->xxx())` to one specific method
 
 <br>
 
-## WithConsecutiveArgToArrayRector
+## UseSpecificWithMethodRector
 
-Split `withConsecutive()` arg to array
+Changes `->with()` to more specific method
 
-- class: [`Rector\PHPUnit\Rector\MethodCall\WithConsecutiveArgToArrayRector`](../src/Rector/MethodCall/WithConsecutiveArgToArrayRector.php)
+- class: [`Rector\PHPUnit\Rector\MethodCall\UseSpecificWithMethodRector`](../src/Rector/MethodCall/UseSpecificWithMethodRector.php)
 
 ```diff
- class SomeClass
- {
-     public function run($one, $two)
-     {
-     }
- }
+  class SomeClass extends PHPUnit\Framework\TestCase
+  {
+      public function test()
+      {
+          $translator = $this->createMock('SomeClass');
 
- class SomeTestCase extends \PHPUnit\Framework\TestCase
- {
-     public function test()
-     {
-         $someClassMock = $this->createMock(SomeClass::class);
-         $someClassMock
-             ->expects($this->exactly(2))
-             ->method('run')
--            ->withConsecutive(1, 2, 3, 5);
-+            ->withConsecutive([1, 2], [3, 5]);
-     }
- }
+          $translator->expects($this->any())
+              ->method('trans')
+-             ->with($this->equalTo('old max {{ max }}!'));
++             ->with('old max {{ max }}!');
+      }
+  }
 ```
 
 <br>

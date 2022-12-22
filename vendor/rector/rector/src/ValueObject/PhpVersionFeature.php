@@ -3,6 +3,9 @@
 declare (strict_types=1);
 namespace Rector\Core\ValueObject;
 
+/**
+ * @api
+ */
 final class PhpVersionFeature
 {
     /**
@@ -37,6 +40,10 @@ final class PhpVersionFeature
      * @var int
      */
     public const NO_REFERENCE_IN_ARG = \Rector\Core\ValueObject\PhpVersion::PHP_54;
+    /**
+     * @var int
+     */
+    public const SHORT_ARRAY = \Rector\Core\ValueObject\PhpVersion::PHP_54;
     /**
      * @var int
      */
@@ -288,6 +295,10 @@ final class PhpVersionFeature
     /**
      * @var int
      */
+    public const DEPRECATE_MONEY_FORMAT = \Rector\Core\ValueObject\PhpVersion::PHP_74;
+    /**
+     * @var int
+     */
     public const ARRAY_KEY_EXISTS_TO_PROPERTY_EXISTS = \Rector\Core\ValueObject\PhpVersion::PHP_74;
     /**
      * @var int
@@ -309,6 +320,10 @@ final class PhpVersionFeature
      * @var int
      */
     public const EXPORT_TO_REFLECTION_FUNCTION = \Rector\Core\ValueObject\PhpVersion::PHP_74;
+    /**
+     * @var int
+     */
+    public const DEPRECATE_NESTED_TERNARY = \Rector\Core\ValueObject\PhpVersion::PHP_74;
     /**
      * @var int
      */
@@ -449,13 +464,27 @@ final class PhpVersionFeature
      */
     public const ARRAY_SPREAD_STRING_KEYS = \Rector\Core\ValueObject\PhpVersion::PHP_81;
     /**
+     * @see https://wiki.php.net/rfc/internal_method_return_types
+     * @var int
+     */
+    public const RETURN_TYPE_WILL_CHANGE_ATTRIBUTE = \Rector\Core\ValueObject\PhpVersion::PHP_81;
+    /**
      * @see https://wiki.php.net/rfc/deprecate_dynamic_properties
      * @var int
      */
     public const DEPRECATE_DYNAMIC_PROPERTIES = \Rector\Core\ValueObject\PhpVersion::PHP_82;
     /**
+     * @see https://wiki.php.net/rfc/readonly_classes
+     * @var int
+     */
+    public const READONLY_CLASS = \Rector\Core\ValueObject\PhpVersion::PHP_82;
+    /**
      * @see https://wiki.php.net/rfc/mixed_type_v2
      * @var int
      */
     public const MIXED_TYPE = \Rector\Core\ValueObject\PhpVersion::PHP_80;
+    /**
+     * @var int
+     */
+    public const DEPRECATE_NULL_ARG_IN_STRING_FUNCTION = \Rector\Core\ValueObject\PhpVersion::PHP_81;
 }

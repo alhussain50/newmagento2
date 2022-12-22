@@ -82,7 +82,9 @@ var config = {
             'jquery-ui-modules/tabs': 'jquery/ui-modules/widgets/tabs',
             'jquery-ui-modules/tooltip': 'jquery/ui-modules/widgets/tooltip',
             'jquery-ui-modules/widget': 'jquery/ui-modules/widget',
-            'jquery-ui-modules/timepicker': 'jquery/timepicker'
+            'jquery-ui-modules/timepicker': 'jquery/timepicker',
+            'vimeo': 'vimeo/player',
+            'vimeoWrapper': 'vimeo/vimeo-wrapper'
         }
     },
     shim: {
@@ -94,13 +96,17 @@ var config = {
         'matchMedia': {
             'exports': 'mediaCheck'
         },
-        'magnifier/magnifier': ['jquery']
+        'magnifier/magnifier': ['jquery'],
+        'vimeo/player': {
+            'exports': 'Player'
+        }
     },
     paths: {
         'jquery/validate': 'jquery/jquery.validate',
         'jquery/file-uploader': 'jquery/fileUploader/jquery.fileuploader',
         'prototype': 'legacy-build.min',
-        'jquery/jquery-storageapi': 'jquery/jquery.storageapi.min',
+        'jquery/jquery.cookie': 'js-cookie/cookie-wrapper',
+        'jquery/jquery-storageapi': 'js-storage/storage-wrapper',
         'text': 'mage/requirejs/text',
         'domReady': 'requirejs/domReady',
         'spectrum': 'jquery/spectrum/spectrum',
@@ -218,13 +224,6 @@ var config = {
         'mage/backend/bootstrap',
         'mage/adminhtml/globals'
     ],
-    config: {
-        mixins: {
-            'jquery/jquery-ui': {
-                'jquery/patches/jquery-ui-sortable': true
-            }
-        }
-    },
     'paths': {
         'jquery/ui': 'jquery/jquery-ui'
     }
@@ -429,20 +428,6 @@ var config = {
         '*': {
             integration: 'Magento_Integration/js/integration'
         }
-    }
-};
-
-require.config(config);
-})();
-(function() {
-/**
- * Copyright © Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
-
-var config = {
-    paths: {
-        'jquery/jquery-storageapi': 'Magento_Cookie/js/jquery.storageapi.extended'
     }
 };
 
@@ -778,6 +763,20 @@ var config = {
         "braintreeLpm": "https://js.braintreegateway.com/web/3.79.1/js/local-payment.min",
         "googlePayLibrary": "https://pay.google.com/gp/p/js/pay",
         "braintreePayPalInContextCheckout": "https://www.paypalobjects.com/api/checkout"
+    }
+};
+
+require.config(config);
+})();
+(function() {
+/**
+ * Copyright © 2020 Toogas.
+ */
+var config = {
+    map: {
+        '*': {
+            Chart: 'Toogas_AbTesting/js/chart.min'
+        }
     }
 };
 

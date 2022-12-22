@@ -4,6 +4,7 @@ declare (strict_types=1);
 namespace Rector\Transform\ValueObject;
 
 use PHPStan\Type\ObjectType;
+use Rector\Core\Validation\RectorAssert;
 final class DimFetchAssignToMethodCall
 {
     /**
@@ -26,14 +27,15 @@ final class DimFetchAssignToMethodCall
         $this->listClass = $listClass;
         $this->itemClass = $itemClass;
         $this->addMethod = $addMethod;
+        RectorAssert::methodName($addMethod);
     }
-    public function getListObjectType() : \PHPStan\Type\ObjectType
+    public function getListObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->listClass);
+        return new ObjectType($this->listClass);
     }
-    public function getItemObjectType() : \PHPStan\Type\ObjectType
+    public function getItemObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->itemClass);
+        return new ObjectType($this->itemClass);
     }
     public function getAddMethod() : string
     {

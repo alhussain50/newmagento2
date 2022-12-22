@@ -3,7 +3,10 @@
 declare (strict_types=1);
 namespace Rector\PhpAttribute;
 
+use PhpParser\BuilderHelpers;
 use PhpParser\Node\Expr;
+use Rector\BetterPhpDocParser\PhpDoc\ArrayItemNode;
+use Rector\BetterPhpDocParser\PhpDoc\DoctrineAnnotationTagValueNode;
 use Rector\PhpAttribute\Contract\AnnotationToAttributeMapperInterface;
 use Rector\PhpAttribute\Enum\DocTagNodeState;
 /**
@@ -12,7 +15,7 @@ use Rector\PhpAttribute\Enum\DocTagNodeState;
 final class AnnotationToAttributeMapper
 {
     /**
-     * @var \Rector\PhpAttribute\Contract\AnnotationToAttributeMapperInterface[]
+     * @var AnnotationToAttributeMapperInterface[]
      * @readonly
      */
     private $annotationToAttributeMappers;
@@ -24,7 +27,7 @@ final class AnnotationToAttributeMapper
         $this->annotationToAttributeMappers = $annotationToAttributeMappers;
     }
     /**
-     * @return mixed[]|\PhpParser\Node\Expr|string
+     * @return Expr|DocTagNodeState::REMOVE_ARRAY
      * @param mixed $value
      */
     public function map($value)
@@ -34,9 +37,17 @@ final class AnnotationToAttributeMapper
                 return $annotationToAttributeMapper->map($value);
             }
         }
-        if ($value instanceof \PhpParser\Node\Expr) {
+        if ($value instanceof Expr) {
             return $value;
         }
-        return \Rector\PhpAttribute\Enum\DocTagNodeState::REMOVE_ARRAY;
+        // remove node, as handled elsewhere
+        if ($value instanceof DoctrineAnnotationTagValueNode) {
+            return DocTagNodeState::REMOVE_ARRAY;
+        }
+        if ($value instanceof ArrayItemNode) {
+            return BuilderHelpers::normalizeValue((string) $value);
+        }
+        // fallback
+        return BuilderHelpers::normalizeValue($value);
     }
 }

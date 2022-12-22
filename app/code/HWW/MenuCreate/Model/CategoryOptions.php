@@ -16,7 +16,6 @@ class CategoryOptions implements \Magento\Framework\Data\OptionSourceInterface {
     public function toOptionArray() {
         $options = [];
         $collection = $this->_collectionFactory->create();
-        $options[] = ['label' => 'Select One', 'value' => ''];
         foreach ($collection as $category) {
             $options[] = ['label' => __($category->getData('category_name')), 'value' => $category->getData('category_name')];
         }

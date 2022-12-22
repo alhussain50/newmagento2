@@ -3,19 +3,15 @@
 declare (strict_types=1);
 namespace Rector\Core\Php\PhpVersionResolver;
 
-use RectorPrefix20211221\Composer\Semver\VersionParser;
+use RectorPrefix202211\Composer\Semver\VersionParser;
+use RectorPrefix202211\Nette\Utils\FileSystem;
+use RectorPrefix202211\Nette\Utils\Json;
 use Rector\Core\Util\PhpVersionFactory;
-use RectorPrefix20211221\Symplify\ComposerJsonManipulator\ComposerJsonFactory;
 /**
  * @see \Rector\Core\Tests\Php\PhpVersionResolver\ProjectComposerJsonPhpVersionResolver\ProjectComposerJsonPhpVersionResolverTest
  */
 final class ProjectComposerJsonPhpVersionResolver
 {
-    /**
-     * @readonly
-     * @var \Symplify\ComposerJsonManipulator\ComposerJsonFactory
-     */
-    private $composerJsonFactory;
     /**
      * @readonly
      * @var \Composer\Semver\VersionParser
@@ -26,21 +22,21 @@ final class ProjectComposerJsonPhpVersionResolver
      * @var \Rector\Core\Util\PhpVersionFactory
      */
     private $phpVersionFactory;
-    public function __construct(\RectorPrefix20211221\Symplify\ComposerJsonManipulator\ComposerJsonFactory $composerJsonFactory, \RectorPrefix20211221\Composer\Semver\VersionParser $versionParser, \Rector\Core\Util\PhpVersionFactory $phpVersionFactory)
+    public function __construct(VersionParser $versionParser, PhpVersionFactory $phpVersionFactory)
     {
-        $this->composerJsonFactory = $composerJsonFactory;
         $this->versionParser = $versionParser;
         $this->phpVersionFactory = $phpVersionFactory;
     }
     public function resolve(string $composerJson) : ?int
     {
-        $projectComposerJson = $this->composerJsonFactory->createFromFilePath($composerJson);
+        $composerJsonContents = FileSystem::read($composerJson);
+        $projectComposerJson = Json::decode($composerJsonContents, Json::FORCE_ARRAY);
         // see https://getcomposer.org/doc/06-config.md#platform
-        $platformPhp = $projectComposerJson->getConfig()['platform']['php'] ?? null;
+        $platformPhp = $projectComposerJson['config']['platform']['php'] ?? null;
         if ($platformPhp !== null) {
             return $this->phpVersionFactory->createIntVersion($platformPhp);
         }
-        $requirePhpVersion = $projectComposerJson->getRequirePhpVersion();
+        $requirePhpVersion = $projectComposerJson['require']['php'] ?? null;
         if ($requirePhpVersion === null) {
             return null;
         }

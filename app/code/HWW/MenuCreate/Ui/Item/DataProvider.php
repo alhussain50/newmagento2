@@ -2,7 +2,7 @@
 
 namespace HWW\MenuCreate\Ui\Item;
 
-use HWW\MenuCreate\Model\ResourceModel\Item\Collection;
+use HWW\MenuCreate\Model\ResourceModel\Item\CollectionFactory;
 use Magento\Ui\DataProvider\AbstractDataProvider;
 
 class DataProvider extends AbstractDataProvider
@@ -13,7 +13,7 @@ class DataProvider extends AbstractDataProvider
         $name,
         $primaryFieldName,
         $requestFieldName,
-        Collection $collectionFactory,
+        CollectionFactory $collectionFactory,
         array $meta = [],
         array $data = []
     ) {

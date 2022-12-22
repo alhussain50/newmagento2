@@ -27,12 +27,13 @@ final class NewToStaticCall
         $this->type = $type;
         $this->staticCallClass = $staticCallClass;
         $this->staticCallMethod = $staticCallMethod;
-        \Rector\Core\Validation\RectorAssert::className($type);
-        \Rector\Core\Validation\RectorAssert::className($staticCallClass);
+        RectorAssert::className($type);
+        RectorAssert::className($staticCallClass);
+        RectorAssert::methodName($staticCallMethod);
     }
-    public function getObjectType() : \PHPStan\Type\ObjectType
+    public function getObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->type);
+        return new ObjectType($this->type);
     }
     public function getStaticCallClass() : string
     {

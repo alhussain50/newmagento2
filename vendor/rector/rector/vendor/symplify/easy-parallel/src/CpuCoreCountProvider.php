@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace RectorPrefix20211221\Symplify\EasyParallel;
+namespace RectorPrefix202211\Symplify\EasyParallel;
 
-use RectorPrefix20211221\Nette\Utils\Strings;
+use RectorPrefix202211\Nette\Utils\Strings;
 /**
  * From https://github.com/phpstan/phpstan-src/commit/9124c66dcc55a222e21b1717ba5f60771f7dda92
  */
@@ -13,7 +13,7 @@ final class CpuCoreCountProvider
      * @see https://regex101.com/r/XMeAl4/1
      * @var string
      */
-    public const PROCESSOR_REGEX = '#^processor#m';
+    private const PROCESSOR_REGEX = '#^processor#m';
     /**
      * @var int
      */
@@ -43,10 +43,7 @@ final class CpuCoreCountProvider
         }
         return $coreCount;
     }
-    /**
-     * @return int|null
-     */
-    private function resolveFromProcCpuinfo()
+    private function resolveFromProcCpuinfo() : ?int
     {
         if (!\is_file('/proc/cpuinfo')) {
             return null;
@@ -56,7 +53,7 @@ final class CpuCoreCountProvider
         if ($cpuinfo === \false) {
             return null;
         }
-        $matches = \RectorPrefix20211221\Nette\Utils\Strings::matchAll($cpuinfo, self::PROCESSOR_REGEX);
+        $matches = Strings::matchAll($cpuinfo, self::PROCESSOR_REGEX);
         if ($matches === []) {
             return 0;
         }

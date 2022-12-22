@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace Rector\Core\ValueObjectFactory\Application;
 
+use RectorPrefix202211\Nette\Utils\FileSystem;
 use Rector\Caching\Detector\ChangedFilesDetector;
 use Rector\Core\Contract\Processor\FileProcessorInterface;
 use Rector\Core\FileSystem\FilesFinder;
@@ -24,14 +25,14 @@ final class FileFactory
      */
     private $changedFilesDetector;
     /**
-     * @var \Rector\Core\Contract\Processor\FileProcessorInterface[]
+     * @var FileProcessorInterface[]
      * @readonly
      */
     private $fileProcessors;
     /**
      * @param FileProcessorInterface[] $fileProcessors
      */
-    public function __construct(\Rector\Core\FileSystem\FilesFinder $filesFinder, \Rector\Caching\Detector\ChangedFilesDetector $changedFilesDetector, array $fileProcessors)
+    public function __construct(FilesFinder $filesFinder, ChangedFilesDetector $changedFilesDetector, array $fileProcessors)
     {
         $this->filesFinder = $filesFinder;
         $this->changedFilesDetector = $changedFilesDetector;
@@ -39,25 +40,33 @@ final class FileFactory
     }
     /**
      * @param string[] $paths
-     * @return File[]
+     * @return string[]
      */
-    public function createFromPaths(array $paths, \Rector\Core\ValueObject\Configuration $configuration) : array
+    public function createFileInfosFromPaths(array $paths, Configuration $configuration) : array
     {
         if ($configuration->shouldClearCache()) {
             $this->changedFilesDetector->clear();
         }
         $supportedFileExtensions = $this->resolveSupportedFileExtensions($configuration);
-        $fileInfos = $this->filesFinder->findInDirectoriesAndFiles($paths, $supportedFileExtensions);
+        return $this->filesFinder->findInDirectoriesAndFiles($paths, $supportedFileExtensions);
+    }
+    /**
+     * @param string[] $paths
+     * @return File[]
+     */
+    public function createFromPaths(array $paths, Configuration $configuration) : array
+    {
+        $filePaths = $this->createFileInfosFromPaths($paths, $configuration);
         $files = [];
-        foreach ($fileInfos as $fileInfo) {
-            $files[] = new \Rector\Core\ValueObject\Application\File($fileInfo, $fileInfo->getContents());
+        foreach ($filePaths as $filePath) {
+            $files[] = new File($filePath, FileSystem::read($filePath));
         }
         return $files;
     }
     /**
      * @return string[]
      */
-    private function resolveSupportedFileExtensions(\Rector\Core\ValueObject\Configuration $configuration) : array
+    private function resolveSupportedFileExtensions(Configuration $configuration) : array
     {
         $supportedFileExtensions = [];
         foreach ($this->fileProcessors as $fileProcessor) {

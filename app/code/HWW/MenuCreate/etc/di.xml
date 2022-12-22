@@ -3,7 +3,10 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="hww_testimonials_grid_data_source" xsi:type="string">HWW\MenuCreate\Model\ResourceModel\Item\Grid\Collection</item>
+                <item name="hww_item_grid_data_source" xsi:type="string">HWW\MenuCreate\Model\ResourceModel\Item\Grid\Collection</item>
+            </argument>
+            <argument name="collections" xsi:type="array">
+                <item name="hww_glossary_category_grid_data_source" xsi:type="string">HWW\MenuCreate\Model\ResourceModel\Category\Grid\Collection</item>
             </argument>
         </arguments>
     </type>

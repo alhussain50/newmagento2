@@ -19,6 +19,6 @@ class Index extends \Magento\Backend\App\Action
         }
         protected function _isAllowed()
         {
-            return $this->_authorization->isAllowed('HWW_MenuCreate::testimonial');
+            return $this->_authorization->isAllowed('HWW_MenuCreate::item');
         }
 }

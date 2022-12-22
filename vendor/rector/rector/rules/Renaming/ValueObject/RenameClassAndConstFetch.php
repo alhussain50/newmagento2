@@ -4,8 +4,9 @@ declare (strict_types=1);
 namespace Rector\Renaming\ValueObject;
 
 use PHPStan\Type\ObjectType;
+use Rector\Core\Validation\RectorAssert;
 use Rector\Renaming\Contract\RenameClassConstFetchInterface;
-final class RenameClassAndConstFetch implements \Rector\Renaming\Contract\RenameClassConstFetchInterface
+final class RenameClassAndConstFetch implements RenameClassConstFetchInterface
 {
     /**
      * @readonly
@@ -33,10 +34,14 @@ final class RenameClassAndConstFetch implements \Rector\Renaming\Contract\Rename
         $this->oldConstant = $oldConstant;
         $this->newClass = $newClass;
         $this->newConstant = $newConstant;
+        RectorAssert::className($oldClass);
+        RectorAssert::constantName($oldConstant);
+        RectorAssert::className($newClass);
+        RectorAssert::constantName($newConstant);
     }
-    public function getOldObjectType() : \PHPStan\Type\ObjectType
+    public function getOldObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->oldClass);
+        return new ObjectType($this->oldClass);
     }
     public function getOldConstant() : string
     {

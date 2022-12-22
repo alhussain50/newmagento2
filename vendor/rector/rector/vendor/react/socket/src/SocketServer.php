@@ -1,10 +1,10 @@
 <?php
 
-namespace RectorPrefix20211221\React\Socket;
+namespace RectorPrefix202211\React\Socket;
 
-use RectorPrefix20211221\Evenement\EventEmitter;
-use RectorPrefix20211221\React\EventLoop\LoopInterface;
-final class SocketServer extends \RectorPrefix20211221\Evenement\EventEmitter implements \RectorPrefix20211221\React\Socket\ServerInterface
+use RectorPrefix202211\Evenement\EventEmitter;
+use RectorPrefix202211\React\EventLoop\LoopInterface;
+final class SocketServer extends EventEmitter implements ServerInterface
 {
     private $server;
     /**
@@ -29,7 +29,7 @@ final class SocketServer extends \RectorPrefix20211221\Evenement\EventEmitter im
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, array $context = array(), \RectorPrefix20211221\React\EventLoop\LoopInterface $loop = null)
+    public function __construct($uri, array $context = array(), LoopInterface $loop = null)
     {
         // apply default options if not explicitly given
         $context += array('tcp' => array(), 'tls' => array(), 'unix' => array());
@@ -39,21 +39,21 @@ final class SocketServer extends \RectorPrefix20211221\Evenement\EventEmitter im
             $scheme = \substr($uri, 0, $pos);
         }
         if ($scheme === 'unix') {
-            $server = new \RectorPrefix20211221\React\Socket\UnixServer($uri, $loop, $context['unix']);
+            $server = new UnixServer($uri, $loop, $context['unix']);
         } elseif ($scheme === 'php') {
-            $server = new \RectorPrefix20211221\React\Socket\FdServer($uri, $loop);
+            $server = new FdServer($uri, $loop);
         } else {
             if (\preg_match('#^(?:\\w+://)?\\d+$#', $uri)) {
                 throw new \InvalidArgumentException('Invalid URI given (EINVAL)', \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22);
             }
-            $server = new \RectorPrefix20211221\React\Socket\TcpServer(\str_replace('tls://', '', $uri), $loop, $context['tcp']);
+            $server = new TcpServer(\str_replace('tls://', '', $uri), $loop, $context['tcp']);
             if ($scheme === 'tls') {
-                $server = new \RectorPrefix20211221\React\Socket\SecureServer($server, $loop, $context['tls']);
+                $server = new SecureServer($server, $loop, $context['tls']);
             }
         }
         $this->server = $server;
         $that = $this;
-        $server->on('connection', function (\RectorPrefix20211221\React\Socket\ConnectionInterface $conn) use($that) {
+        $server->on('connection', function (ConnectionInterface $conn) use($that) {
             $that->emit('connection', array($conn));
         });
         $server->on('error', function (\Exception $error) use($that) {
@@ -86,13 +86,17 @@ final class SocketServer extends \RectorPrefix20211221\Evenement\EventEmitter im
      */
     public static function accept($socket)
     {
-        $newSocket = @\stream_socket_accept($socket, 0);
-        if (\false === $newSocket) {
+        $errno = 0;
+        $errstr = '';
+        \set_error_handler(function ($_, $error) use(&$errno, &$errstr) {
             // Match errstr from PHP's warning message.
             // stream_socket_accept(): accept failed: Connection timed out
-            $error = \error_get_last();
-            $errstr = \preg_replace('#.*: #', '', $error['message']);
-            $errno = self::errno($errstr);
+            $errstr = \preg_replace('#.*: #', '', $error);
+            $errno = SocketServer::errno($errstr);
+        });
+        $newSocket = \stream_socket_accept($socket, 0);
+        \restore_error_handler();
+        if (\false === $newSocket) {
             throw new \RuntimeException('Unable to accept new connection: ' . $errstr . self::errconst($errno), $errno);
         }
         return $newSocket;

@@ -11,24 +11,61 @@ class InstallSchema implements \Magento\Framework\Setup\InstallSchemaInterface
 		$setup->startSetup();
 
         $table = $setup->getConnection()->newTable(
-            $setup->getTable('hww_testimonials')
-        )->addColumn( 
-            'id',
+            $setup->getTable('hww_glossary')
+        )->addColumn(
+            'index',
             Table::TYPE_INTEGER,
             null, //size of column, null uses default size
             ['identity' => true, 'nullable' => false, 'primary' => true],
-            'Item ID'
+            'Index'
         )->addColumn(
-            'name',
-            Table::TYPE_TEXT, 
+            'category_name',
+            Table::TYPE_TEXT,
+            255, //size of column, null uses default size
+            ['nullable' => true],
+            'Category Name'
+        )->addColumn(
+            'title',
+            Table::TYPE_TEXT,
             255, //size of column, null uses default size
             ['nullable' => false],
-            'Item Name'
+            'Title'
+        )->addColumn(
+            'description',
+            Table::TYPE_TEXT,
+            255, //size of column, null uses default size
+            ['nullable' => false],
+            'Description'
         )->addIndex(
-            $setup->getIdxName('hww_testimonials', ['name']),
-            ['name']
+            $setup->getIdxName('hww_glossary', ['title']),
+            ['title']
         )->setComment(
             'Sample Items'
+        );
+
+        $setup->getConnection()->createTable($table);
+
+
+        // CategoryTable
+        $table = $setup->getConnection()->newTable(
+            $setup->getTable('hww_category')
+        )->addColumn( 
+            'category_id',
+            Table::TYPE_INTEGER,
+            null, //size of column, null uses default size
+            ['identity' => true, 'nullable' => false, 'primary' => true],
+            'Category ID'
+        )->addColumn(
+            'category_name',
+            Table::TYPE_TEXT,
+            255, //size of column, null uses default size
+            ['nullable' => true],
+            'Category Name'
+        )->addIndex(
+            $setup->getIdxName('hww_category', ['category_name']),
+            ['category_name']
+        )->setComment(
+            'Category List'
         );
 
         $setup->getConnection()->createTable($table);

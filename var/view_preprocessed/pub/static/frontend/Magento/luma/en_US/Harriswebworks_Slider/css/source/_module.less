@@ -1,0 +1,226 @@
+// /**
+//  * Copyright © Magento, Inc. All rights reserved.
+//  * See COPYING.txt for license details.
+//  */
+
+
+//
+//  Common
+//  _____________________________________________
+
+& when (@media-common =true) {
+    .wrapper_slider{
+        .owl .owl-item {
+            float: left;
+        }
+        .owl-loaded,  .owl-carousel {
+            overflow: hidden;
+            position: relative;
+        }
+        .owl-nav button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: 0;
+        }
+        .owl-nav button:active{
+            box-shadow: none;
+        }
+        button.owl-prev {
+            left: 0;
+        }
+        button.owl-next {
+            right: 0;
+        }
+        .banner_item {
+            position: relative;
+            img {
+                height: 510px;
+                background-size: cover;
+                background-position: center;
+                width: 100%;
+            }
+            .banner_content{
+                position: absolute;
+                left: 0;
+                top:50%;
+                transform: translateY(-50%);
+                font-family: "Lato", Helvetica, Arial, sans-serif;
+                font-style: normal;
+                text-decoration: none;
+                text-transform: capitalize;
+                color: #fff;
+                display: block;
+                border-radius: 0;
+                text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+                display: block;
+                width: auto;
+                text-align: center;
+                padding: 0 8%;
+            }
+
+            h1,    h2,    h3,    h4,    h5,    h6{
+                font-weight: 700;
+                text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+                margin-bottom: 15px;
+            }
+            h1 {
+                font-size: 36px;
+                line-height: 40px;
+            }
+            h2 {
+                font-size: 30px;
+                line-height: 46px;
+            }
+            h3 {
+                font-size: 26px;
+                line-height: 30px;
+            }
+            h4 {
+                font-size: 24px;
+                line-height: 30px;
+            }
+            h5 {
+                font-size: 22px;
+                line-height: 26px;
+            }
+            h6 {
+                font-size: 20px;
+                line-height: 24px;
+            }
+            p {
+                font-size: 16px;
+                line-height: 20px;
+                font-weight: 400;
+                text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+                a {
+                    margin-top: 20px;
+                    display: inline-block;
+                    background: #827839;
+                    padding: 10px 20px;
+                    color: #fff;
+                    font-weight: 700;
+                    transition: .3s;
+                    font-size: 20px;
+                    line-height: 1;
+                    &:hover {
+                        text-decoration: none;
+                        background: #AF9B60;
+                    }
+                }
+            }
+        }
+
+
+
+        button.owl-dot {
+            box-shadow: none;
+            background: transparent;
+            border: 0;
+            padding: 5px;
+            background: transparent;
+            border: 0;
+            padding: 5px;
+            span {
+                background: transparent;
+                border-radius: 20px;
+                height: 12px;
+                width: 12px;
+                display: block;
+                border-radius: 20px;
+                border: 2px solid #fff;
+            }
+        }
+        .owl-nav {
+            button {
+                box-shadow: none;
+                img {
+                    max-height: 50px;
+                }
+                &:hover {
+                    background: transparent;
+                    opacity: 0.9;
+                }
+            }
+        }
+        .owl-nav.disabled {
+            display: none;
+        }
+        .owl-dots {
+            text-align: center;
+            text-align: center;
+            margin-top: -50px;
+            position: absolute;
+            z-index: 99999;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        button.owl-dot.active {
+            span {
+                opacity: 1;
+                background: #fff;
+            }
+        }
+
+    }
+}
+
+
+
+
+@media only screen and (max-width: 767px) {
+
+    .banner-slider {
+        .wrapper_slider {
+            .owl-nav {
+                button {
+                    img {
+                        max-height: 25px;
+                    }
+                    padding: 7px 5px;
+                }
+            }
+        }
+    }
+    img.mobile {
+        &+img.desktop {
+            display: none;
+        }
+    }
+
+    picture.mobile {
+        &+picture.desktop {
+            display: none;
+
+        }
+
+    }
+}
+
+
+@media only screen and (min-width: 768px) {
+
+    img.desktop {
+        display: block;
+    }
+    picture.desktop {
+        display: block;
+    }
+    img.mobile {
+        display: none;
+    }
+    picture.mobile {
+        display: none;
+    }
+    .wrapper_slider {
+        .banner_item {
+            .banner_content {
+                padding: 0 20%;
+            }
+        }
+    }
+
+
+}

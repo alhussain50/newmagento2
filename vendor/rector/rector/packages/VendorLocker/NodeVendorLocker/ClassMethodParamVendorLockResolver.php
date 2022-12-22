@@ -4,12 +4,11 @@ declare (strict_types=1);
 namespace Rector\VendorLocker\NodeVendorLocker;
 
 use PhpParser\Node\Stmt\ClassMethod;
-use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassReflection;
+use Rector\Core\FileSystem\FilePathHelper;
+use Rector\Core\Reflection\ReflectionResolver;
 use Rector\FamilyTree\Reflection\FamilyRelationsAnalyzer;
 use Rector\NodeNameResolver\NodeNameResolver;
-use Rector\NodeTypeResolver\Node\AttributeKey;
-use RectorPrefix20211221\Symplify\SmartFileSystem\Normalizer\PathNormalizer;
 final class ClassMethodParamVendorLockResolver
 {
     /**
@@ -19,43 +18,49 @@ final class ClassMethodParamVendorLockResolver
     private $nodeNameResolver;
     /**
      * @readonly
-     * @var \Symplify\SmartFileSystem\Normalizer\PathNormalizer
-     */
-    private $pathNormalizer;
-    /**
-     * @readonly
      * @var \Rector\FamilyTree\Reflection\FamilyRelationsAnalyzer
      */
     private $familyRelationsAnalyzer;
-    public function __construct(\Rector\NodeNameResolver\NodeNameResolver $nodeNameResolver, \RectorPrefix20211221\Symplify\SmartFileSystem\Normalizer\PathNormalizer $pathNormalizer, \Rector\FamilyTree\Reflection\FamilyRelationsAnalyzer $familyRelationsAnalyzer)
+    /**
+     * @readonly
+     * @var \Rector\Core\Reflection\ReflectionResolver
+     */
+    private $reflectionResolver;
+    /**
+     * @readonly
+     * @var \Rector\Core\FileSystem\FilePathHelper
+     */
+    private $filePathHelper;
+    public function __construct(NodeNameResolver $nodeNameResolver, FamilyRelationsAnalyzer $familyRelationsAnalyzer, ReflectionResolver $reflectionResolver, FilePathHelper $filePathHelper)
     {
         $this->nodeNameResolver = $nodeNameResolver;
-        $this->pathNormalizer = $pathNormalizer;
         $this->familyRelationsAnalyzer = $familyRelationsAnalyzer;
+        $this->reflectionResolver = $reflectionResolver;
+        $this->filePathHelper = $filePathHelper;
     }
     /**
      * Includes non-vendor classes
      */
-    public function isSoftLocked(\PhpParser\Node\Stmt\ClassMethod $classMethod) : bool
+    public function isSoftLocked(ClassMethod $classMethod) : bool
     {
         if ($this->isVendorLocked($classMethod)) {
             return \true;
         }
-        $classReflection = $this->resolveClassReflection($classMethod);
-        if (!$classReflection instanceof \PHPStan\Reflection\ClassReflection) {
+        $classReflection = $this->reflectionResolver->resolveClassReflection($classMethod);
+        if (!$classReflection instanceof ClassReflection) {
             return \false;
         }
         /** @var string $methodName */
         $methodName = $this->nodeNameResolver->getName($classMethod);
         return $this->hasClassMethodLockMatchingFileName($classReflection, $methodName, '');
     }
-    public function isVendorLocked(\PhpParser\Node\Stmt\ClassMethod $classMethod) : bool
+    public function isVendorLocked(ClassMethod $classMethod) : bool
     {
         if ($classMethod->isMagic()) {
             return \true;
         }
-        $classReflection = $this->resolveClassReflection($classMethod);
-        if (!$classReflection instanceof \PHPStan\Reflection\ClassReflection) {
+        $classReflection = $this->reflectionResolver->resolveClassReflection($classMethod);
+        if (!$classReflection instanceof ClassReflection) {
             return \false;
         }
         /** @var string $methodName */
@@ -71,7 +76,7 @@ final class ClassMethodParamVendorLockResolver
         $methodName = $this->nodeNameResolver->getName($classMethod);
         return $this->hasClassMethodLockMatchingFileName($classReflection, $methodName, '/vendor/');
     }
-    private function hasTraitMethodVendorLock(\PHPStan\Reflection\ClassReflection $classReflection, string $methodName) : bool
+    private function hasTraitMethodVendorLock(ClassReflection $classReflection, string $methodName) : bool
     {
         $relatedReflectionClasses = $this->familyRelationsAnalyzer->getChildrenOfClassReflection($classReflection);
         foreach ($relatedReflectionClasses as $relatedReflectionClass) {
@@ -85,22 +90,11 @@ final class ClassMethodParamVendorLockResolver
         return \false;
     }
     /**
-     * @return \PHPStan\Reflection\ClassReflection|null
-     */
-    private function resolveClassReflection(\PhpParser\Node\Stmt\ClassMethod $classMethod)
-    {
-        $scope = $classMethod->getAttribute(\Rector\NodeTypeResolver\Node\AttributeKey::SCOPE);
-        if (!$scope instanceof \PHPStan\Analyser\Scope) {
-            return null;
-        }
-        return $scope->getClassReflection();
-    }
-    /**
      * Has interface even in our project?
      * Better skip it, as PHPStan has access only to just analyzed classes.
      * This might change type, that works for current class, but breaks another implementer.
      */
-    private function hasParentInterfaceMethod(\PHPStan\Reflection\ClassReflection $classReflection, string $methodName) : bool
+    private function hasParentInterfaceMethod(ClassReflection $classReflection, string $methodName) : bool
     {
         foreach ($classReflection->getInterfaces() as $interfaceClassReflection) {
             if ($interfaceClassReflection->hasMethod($methodName)) {
@@ -109,7 +103,7 @@ final class ClassMethodParamVendorLockResolver
         }
         return \false;
     }
-    private function hasClassMethodLockMatchingFileName(\PHPStan\Reflection\ClassReflection $classReflection, string $methodName, string $filePathPartName) : bool
+    private function hasClassMethodLockMatchingFileName(ClassReflection $classReflection, string $methodName, string $filePathPartName) : bool
     {
         $ancestorClassReflections = \array_merge($classReflection->getParents(), $classReflection->getInterfaces());
         foreach ($ancestorClassReflections as $ancestorClassReflection) {
@@ -127,7 +121,7 @@ final class ClassMethodParamVendorLockResolver
             if ($filePathPartName === '') {
                 return \true;
             }
-            $normalizedFileName = $this->pathNormalizer->normalizePath($fileName);
+            $normalizedFileName = $this->filePathHelper->normalizePathAndSchema($fileName);
             if (\strpos($normalizedFileName, $filePathPartName) !== \false) {
                 return \true;
             }

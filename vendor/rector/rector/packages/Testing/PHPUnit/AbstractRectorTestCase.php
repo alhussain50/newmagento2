@@ -4,31 +4,31 @@ declare (strict_types=1);
 namespace Rector\Testing\PHPUnit;
 
 use Iterator;
+use RectorPrefix202211\Nette\Utils\FileSystem;
+use RectorPrefix202211\Nette\Utils\Strings;
 use PHPStan\Analyser\NodeScopeResolver;
 use PHPUnit\Framework\ExpectationFailedException;
-use RectorPrefix20211221\Psr\Container\ContainerInterface;
+use RectorPrefix202211\Psr\Container\ContainerInterface;
 use Rector\Core\Application\ApplicationFileProcessor;
 use Rector\Core\Application\FileSystem\RemovedAndAddedFilesCollector;
 use Rector\Core\Autoloading\AdditionalAutoloader;
 use Rector\Core\Autoloading\BootstrapFilesIncluder;
 use Rector\Core\Configuration\ConfigurationFactory;
 use Rector\Core\Configuration\Option;
+use Rector\Core\Configuration\Parameter\ParameterProvider;
 use Rector\Core\ValueObject\Application\File;
 use Rector\NodeTypeResolver\Reflection\BetterReflection\SourceLocatorProvider\DynamicSourceLocatorProvider;
 use Rector\Testing\Contract\RectorTestInterface;
+use Rector\Testing\Fixture\FixtureFileFinder;
+use Rector\Testing\Fixture\FixtureFileUpdater;
+use Rector\Testing\Fixture\FixtureSplitter;
+use Rector\Testing\Fixture\FixtureTempFileDumper;
 use Rector\Testing\PHPUnit\Behavior\MovingFilesTrait;
-use Rector\Testing\PHPUnit\Behavior\MultipleFilesChangedTrait;
-use RectorPrefix20211221\Symplify\EasyTesting\DataProvider\StaticFixtureFinder;
-use RectorPrefix20211221\Symplify\EasyTesting\DataProvider\StaticFixtureUpdater;
-use RectorPrefix20211221\Symplify\EasyTesting\StaticFixtureSplitter;
-use RectorPrefix20211221\Symplify\PackageBuilder\Parameter\ParameterProvider;
-use Symplify\SmartFileSystem\SmartFileInfo;
-abstract class AbstractRectorTestCase extends \Rector\Testing\PHPUnit\AbstractTestCase implements \Rector\Testing\Contract\RectorTestInterface
+abstract class AbstractRectorTestCase extends \Rector\Testing\PHPUnit\AbstractTestCase implements RectorTestInterface
 {
     use MovingFilesTrait;
-    use MultipleFilesChangedTrait;
     /**
-     * @var \Symplify\PackageBuilder\Parameter\ParameterProvider
+     * @var \Rector\Core\Configuration\Parameter\ParameterProvider
      */
     protected $parameterProvider;
     /**
@@ -36,9 +36,9 @@ abstract class AbstractRectorTestCase extends \Rector\Testing\PHPUnit\AbstractTe
      */
     protected $removedAndAddedFilesCollector;
     /**
-     * @var \Symplify\SmartFileSystem\SmartFileInfo|null
+     * @var string|null
      */
-    protected $originalTempFileInfo;
+    protected $originalTempFilePath;
     /**
      * @var \Psr\Container\ContainerInterface|null
      */
@@ -55,95 +55,119 @@ abstract class AbstractRectorTestCase extends \Rector\Testing\PHPUnit\AbstractTe
     {
         // speed up
         @\ini_set('memory_limit', '-1');
-        // include local files
-        if (\file_exists(__DIR__ . '/../../../preload.php') && \file_exists(__DIR__ . '/../../../vendor')) {
-            require_once __DIR__ . '/../../../preload.php';
-        }
-        if (\file_exists(__DIR__ . '/../../../vendor/scoper-autoload.php')) {
-            require_once __DIR__ . '/../../../vendor/scoper-autoload.php';
-        }
+        $this->includePreloadFilesAndScoperAutoload();
         $configFile = $this->provideConfigFilePath();
         $this->bootFromConfigFiles([$configFile]);
-        $this->applicationFileProcessor = $this->getService(\Rector\Core\Application\ApplicationFileProcessor::class);
-        $this->parameterProvider = $this->getService(\RectorPrefix20211221\Symplify\PackageBuilder\Parameter\ParameterProvider::class);
-        $this->dynamicSourceLocatorProvider = $this->getService(\Rector\NodeTypeResolver\Reflection\BetterReflection\SourceLocatorProvider\DynamicSourceLocatorProvider::class);
-        $this->removedAndAddedFilesCollector = $this->getService(\Rector\Core\Application\FileSystem\RemovedAndAddedFilesCollector::class);
+        $this->applicationFileProcessor = $this->getService(ApplicationFileProcessor::class);
+        $this->parameterProvider = $this->getService(ParameterProvider::class);
+        $this->dynamicSourceLocatorProvider = $this->getService(DynamicSourceLocatorProvider::class);
+        // restore added and removed files to 0
+        $this->removedAndAddedFilesCollector = $this->getService(RemovedAndAddedFilesCollector::class);
         $this->removedAndAddedFilesCollector->reset();
         /** @var AdditionalAutoloader $additionalAutoloader */
-        $additionalAutoloader = $this->getService(\Rector\Core\Autoloading\AdditionalAutoloader::class);
+        $additionalAutoloader = $this->getService(AdditionalAutoloader::class);
         $additionalAutoloader->autoloadPaths();
         /** @var BootstrapFilesIncluder $bootstrapFilesIncluder */
-        $bootstrapFilesIncluder = $this->getService(\Rector\Core\Autoloading\BootstrapFilesIncluder::class);
+        $bootstrapFilesIncluder = $this->getService(BootstrapFilesIncluder::class);
         $bootstrapFilesIncluder->includeBootstrapFiles();
     }
     protected function tearDown() : void
     {
         // free memory and trigger gc to reduce memory peak consumption on windows
-        unset($this->applicationFileProcessor, $this->parameterProvider, $this->dynamicSourceLocatorProvider, $this->removedAndAddedFilesCollector, $this->originalTempFileInfo);
+        unset($this->applicationFileProcessor, $this->parameterProvider, $this->dynamicSourceLocatorProvider, $this->removedAndAddedFilesCollector, $this->originalTempFilePath);
         \gc_collect_cycles();
     }
     /**
-     * @return Iterator<SmartFileInfo>
+     * @return Iterator<<string>>
      */
-    protected function yieldFilesFromDirectory(string $directory, string $suffix = '*.php.inc') : \Iterator
+    protected function yieldFilesFromDirectory(string $directory, string $suffix = '*.php.inc') : Iterator
     {
-        return \RectorPrefix20211221\Symplify\EasyTesting\DataProvider\StaticFixtureFinder::yieldDirectoryExclusively($directory, $suffix);
+        return FixtureFileFinder::yieldDirectory($directory, $suffix);
     }
     protected function isWindows() : bool
     {
         return \strncasecmp(\PHP_OS, 'WIN', 3) === 0;
     }
-    protected function doTestFileInfo(\Symplify\SmartFileSystem\SmartFileInfo $fixtureFileInfo, bool $allowMatches = \true) : void
+    protected function doTestFile(string $fixtureFilePath) : void
     {
-        $inputFileInfoAndExpectedFileInfo = \RectorPrefix20211221\Symplify\EasyTesting\StaticFixtureSplitter::splitFileInfoToLocalInputAndExpectedFileInfos($fixtureFileInfo);
-        $inputFileInfo = $inputFileInfoAndExpectedFileInfo->getInputFileInfo();
-        $this->originalTempFileInfo = $inputFileInfo;
-        $expectedFileInfo = $inputFileInfoAndExpectedFileInfo->getExpectedFileInfo();
-        $this->doTestFileMatchesExpectedContent($inputFileInfo, $expectedFileInfo, $fixtureFileInfo, $allowMatches);
+        $fixtureFileContents = FileSystem::read($fixtureFilePath);
+        if (Strings::match($fixtureFileContents, FixtureSplitter::SPLIT_LINE_REGEX)) {
+            // changed content
+            [$inputFileContents, $expectedFileContents] = FixtureSplitter::loadFileAndSplitInputAndExpected($fixtureFilePath);
+        } else {
+            // no change
+            $inputFileContents = $fixtureFileContents;
+            $expectedFileContents = $fixtureFileContents;
+        }
+        $fileSuffix = $this->resolveOriginalFixtureFileSuffix($fixtureFilePath);
+        $inputFilePath = FixtureTempFileDumper::dump($inputFileContents, $fileSuffix);
+        $expectedFilePath = FixtureTempFileDumper::dump($expectedFileContents, $fileSuffix);
+        $this->originalTempFilePath = $inputFilePath;
+        $this->doTestFileMatchesExpectedContent($inputFilePath, $expectedFilePath, $fixtureFilePath);
     }
     protected function getFixtureTempDirectory() : string
     {
-        return \sys_get_temp_dir() . '/_temp_fixture_easy_testing';
+        return FixtureTempFileDumper::getTempDirectory();
     }
-    private function doTestFileMatchesExpectedContent(\Symplify\SmartFileSystem\SmartFileInfo $originalFileInfo, \Symplify\SmartFileSystem\SmartFileInfo $expectedFileInfo, \Symplify\SmartFileSystem\SmartFileInfo $fixtureFileInfo, bool $allowMatches = \true) : void
+    private function resolveExpectedContents(string $filePath) : string
     {
-        $this->parameterProvider->changeParameter(\Rector\Core\Configuration\Option::SOURCE, [$originalFileInfo->getRealPath()]);
-        $changedContent = $this->processFileInfo($originalFileInfo);
+        $contents = FileSystem::read($filePath);
+        // make sure we don't get a diff in which every line is different (because of differences in EOL)
+        return \str_replace("\r\n", "\n", $contents);
+    }
+    private function resolveOriginalFixtureFileSuffix(string $filePath) : string
+    {
+        if (\substr_compare($filePath, '.inc', -\strlen('.inc')) === 0) {
+            $filePath = \rtrim($filePath, '.inc');
+        }
+        if (\substr_compare($filePath, '.blade.php', -\strlen('.blade.php')) === 0) {
+            return 'blade.php';
+        }
+        return \pathinfo($filePath, \PATHINFO_EXTENSION);
+    }
+    private function includePreloadFilesAndScoperAutoload() : void
+    {
+        if (\file_exists(__DIR__ . '/../../../preload.php')) {
+            if (\file_exists(__DIR__ . '/../../../vendor')) {
+                require_once __DIR__ . '/../../../preload.php';
+                // test case in rector split package
+            } elseif (\file_exists(__DIR__ . '/../../../../../../vendor')) {
+                require_once __DIR__ . '/../../../preload-split-package.php';
+            }
+        }
+        if (\file_exists(__DIR__ . '/../../../vendor/scoper-autoload.php')) {
+            require_once __DIR__ . '/../../../vendor/scoper-autoload.php';
+        }
+    }
+    private function doTestFileMatchesExpectedContent(string $originalFilePath, string $expectedFilePath, string $fixtureFilePath) : void
+    {
+        $this->parameterProvider->changeParameter(Option::SOURCE, [$originalFilePath]);
+        $changedContent = $this->processFilePath($originalFilePath);
         // file is removed, we cannot compare it
-        if ($this->removedAndAddedFilesCollector->isFileRemoved($originalFileInfo)) {
+        if ($this->removedAndAddedFilesCollector->isFileRemoved($originalFilePath)) {
             return;
         }
-        $relativeFilePathFromCwd = $fixtureFileInfo->getRelativeFilePathFromCwd();
         try {
-            $this->assertStringEqualsFile($expectedFileInfo->getRealPath(), $changedContent, $relativeFilePathFromCwd);
-        } catch (\PHPUnit\Framework\ExpectationFailedException $expectationFailedException) {
-            if (!$allowMatches) {
-                throw $expectationFailedException;
-            }
-            \RectorPrefix20211221\Symplify\EasyTesting\DataProvider\StaticFixtureUpdater::updateFixtureContent($originalFileInfo, $changedContent, $fixtureFileInfo);
-            $contents = $expectedFileInfo->getContents();
-            // make sure we don't get a diff in which every line is different (because of differences in EOL)
-            $contents = $this->normalizeNewlines($contents);
+            $this->assertStringEqualsFile($expectedFilePath, $changedContent);
+        } catch (ExpectationFailedException $exception) {
+            FixtureFileUpdater::updateFixtureContent($originalFilePath, $changedContent, $fixtureFilePath);
+            $contents = $this->resolveExpectedContents($expectedFilePath);
             // if not exact match, check the regex version (useful for generated hashes/uuids in the code)
-            $this->assertStringMatchesFormat($contents, $changedContent, $relativeFilePathFromCwd);
+            $this->assertStringMatchesFormat($contents, $changedContent);
         }
     }
-    private function normalizeNewlines(string $string) : string
+    private function processFilePath(string $filePath) : string
     {
-        return \str_replace("\r\n", "\n", $string);
-    }
-    private function processFileInfo(\Symplify\SmartFileSystem\SmartFileInfo $fileInfo) : string
-    {
-        $this->dynamicSourceLocatorProvider->setFileInfo($fileInfo);
+        $this->dynamicSourceLocatorProvider->setFilePath($filePath);
         // needed for PHPStan, because the analyzed file is just created in /temp - need for trait and similar deps
         /** @var NodeScopeResolver $nodeScopeResolver */
-        $nodeScopeResolver = $this->getService(\PHPStan\Analyser\NodeScopeResolver::class);
-        $nodeScopeResolver->setAnalysedFiles([$fileInfo->getRealPath()]);
+        $nodeScopeResolver = $this->getService(NodeScopeResolver::class);
+        $nodeScopeResolver->setAnalysedFiles([$filePath]);
         /** @var ConfigurationFactory $configurationFactory */
-        $configurationFactory = $this->getService(\Rector\Core\Configuration\ConfigurationFactory::class);
-        $configuration = $configurationFactory->createForTests();
-        $file = new \Rector\Core\ValueObject\Application\File($fileInfo, $fileInfo->getContents());
-        $this->applicationFileProcessor->run([$file], $configuration);
+        $configurationFactory = $this->getService(ConfigurationFactory::class);
+        $configuration = $configurationFactory->createForTests([$filePath]);
+        $file = new File($filePath, FileSystem::read($filePath));
+        $this->applicationFileProcessor->processFiles([$file], $configuration);
         return $file->getFileContent();
     }
 }

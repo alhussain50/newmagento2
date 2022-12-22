@@ -7,7 +7,6 @@ use ArrayObject;
 use function array_keys;
 use function array_merge;
 use function array_unique;
-use function get_class;
 use function gettype;
 use function is_object;
 use function is_string;
@@ -41,7 +40,7 @@ class EventManager implements EventManagerInterface
      * instead of first iterating over it and generating a new one
      * -> In result it improves performance by up to 25% even if it looks a bit strange
      *
-     * @var array[]
+     * @var array<string, array<int, array{0: list<callable>}>>
      */
     protected $events = [];
 
@@ -188,7 +187,7 @@ class EventManager implements EventManagerInterface
             throw new Exception\InvalidArgumentException(sprintf(
                 '%s expects a string for the event; received %s',
                 __METHOD__,
-                is_object($eventName) ? get_class($eventName) : gettype($eventName)
+                is_object($eventName) ? $eventName::class : gettype($eventName)
             ));
         }
 
@@ -214,7 +213,7 @@ class EventManager implements EventManagerInterface
             throw new Exception\InvalidArgumentException(sprintf(
                 '%s expects a string for the event; received %s',
                 __METHOD__,
-                is_object($eventName) ? get_class($eventName) : gettype($eventName)
+                is_object($eventName) ? $eventName::class : gettype($eventName)
             ));
         }
 

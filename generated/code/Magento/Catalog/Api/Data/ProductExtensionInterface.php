@@ -93,4 +93,15 @@ interface ProductExtensionInterface extends \Magento\Framework\Api\ExtensionAttr
      * @return $this
      */
     public function setConfigurableProductLinks($configurableProductLinks);
+
+    /**
+     * @return \Magento\SalesRule\Api\Data\RuleDiscountInterface[]|null
+     */
+    public function getDiscounts();
+
+    /**
+     * @param \Magento\SalesRule\Api\Data\RuleDiscountInterface[] $discounts
+     * @return $this
+     */
+    public function setDiscounts($discounts);
 }

@@ -8,13 +8,12 @@ use Rector\Core\ValueObject\Application\MovedFile;
 use Rector\FileSystemRector\Contract\AddedFileInterface;
 use Rector\FileSystemRector\ValueObject\AddedFileWithContent;
 use Rector\FileSystemRector\ValueObject\AddedFileWithNodes;
-use Symplify\SmartFileSystem\SmartFileInfo;
 final class RemovedAndAddedFilesCollector
 {
     /**
-     * @var SmartFileInfo[]
+     * @var string[]
      */
-    private $removedFileInfos = [];
+    private $removedFilePaths = [];
     /**
      * @var AddedFileInterface[]
      */
@@ -23,39 +22,41 @@ final class RemovedAndAddedFilesCollector
      * @var MovedFile[]
      */
     private $movedFiles = [];
-    public function removeFile(\Symplify\SmartFileSystem\SmartFileInfo $smartFileInfo) : void
+    public function removeFile(string $filePath) : void
     {
-        $this->removedFileInfos[] = $smartFileInfo;
+        $this->removedFilePaths[] = $filePath;
     }
     /**
-     * @return SmartFileInfo[]
+     * @return string[]
      */
     public function getRemovedFiles() : array
     {
-        return $this->removedFileInfos;
+        return $this->removedFilePaths;
     }
-    public function isFileRemoved(\Symplify\SmartFileSystem\SmartFileInfo $smartFileInfo) : bool
+    public function isFileRemoved(string $filePath) : bool
     {
         // early assign to variable for increase performance
         // @see https://3v4l.org/FM3vY#focus=8.0.7 vs https://3v4l.org/JZW7b#focus=8.0.7
-        $pathname = $smartFileInfo->getPathname();
-        foreach ($this->removedFileInfos as $removedFileInfo) {
-            if ($removedFileInfo->getPathname() !== $pathname) {
+        //        $pathname = $filePath->getPathname();
+        foreach ($this->removedFilePaths as $removedFilePath) {
+            if ($removedFilePath !== $filePath) {
                 continue;
             }
             return \true;
         }
         foreach ($this->movedFiles as $movedFile) {
             $file = $movedFile->getFile();
-            $fileInfo = $file->getSmartFileInfo();
-            if ($fileInfo->getPathname() !== $pathname) {
+            if ($movedFile->getFilePath() !== $file->getFilePath()) {
                 continue;
             }
             return \true;
         }
         return \false;
     }
-    public function addAddedFile(\Rector\FileSystemRector\Contract\AddedFileInterface $addedFile) : void
+    /**
+     * @api
+     */
+    public function addAddedFile(AddedFileInterface $addedFile) : void
     {
         $this->addedFiles[] = $addedFile;
     }
@@ -64,8 +65,8 @@ final class RemovedAndAddedFilesCollector
      */
     public function getAddedFilesWithContent() : array
     {
-        return \array_filter($this->addedFiles, function (\Rector\FileSystemRector\Contract\AddedFileInterface $addedFile) : bool {
-            return $addedFile instanceof \Rector\FileSystemRector\ValueObject\AddedFileWithContent;
+        return \array_filter($this->addedFiles, static function (AddedFileInterface $addedFile) : bool {
+            return $addedFile instanceof AddedFileWithContent;
         });
     }
     /**
@@ -73,13 +74,9 @@ final class RemovedAndAddedFilesCollector
      */
     public function getAddedFilesWithNodes() : array
     {
-        return \array_filter($this->addedFiles, function (\Rector\FileSystemRector\Contract\AddedFileInterface $addedFile) : bool {
-            return $addedFile instanceof \Rector\FileSystemRector\ValueObject\AddedFileWithNodes;
+        return \array_filter($this->addedFiles, static function (AddedFileInterface $addedFile) : bool {
+            return $addedFile instanceof AddedFileWithNodes;
         });
-    }
-    public function getAffectedFilesCount() : int
-    {
-        return \count($this->addedFiles) + \count($this->removedFileInfos);
     }
     public function getAddedFileCount() : int
     {
@@ -87,7 +84,7 @@ final class RemovedAndAddedFilesCollector
     }
     public function getRemovedFilesCount() : int
     {
-        return \count($this->removedFileInfos);
+        return \count($this->removedFilePaths);
     }
     /**
      * For testing
@@ -96,11 +93,11 @@ final class RemovedAndAddedFilesCollector
     {
         $this->addedFiles = [];
         $this->movedFiles = [];
-        $this->removedFileInfos = [];
+        $this->removedFilePaths = [];
     }
-    public function addMovedFile(\Rector\Core\ValueObject\Application\File $file, string $newPathName) : void
+    public function addMovedFile(File $file, string $newPathName) : void
     {
-        $this->movedFiles[] = new \Rector\Core\ValueObject\Application\MovedFile($file, $newPathName);
+        $this->movedFiles[] = new MovedFile($file, $newPathName);
     }
     /**
      * @return MovedFile[]

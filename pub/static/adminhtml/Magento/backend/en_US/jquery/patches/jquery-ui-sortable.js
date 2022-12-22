@@ -1,1 +1,0 @@
-/var/www/newmagento/lib/web/jquery/patches/jquery-ui-sortable.js

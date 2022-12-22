@@ -5,6 +5,7 @@ namespace HWW\MenuCreate\Model\ResourceModel\Item;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use HWW\MenuCreate\Model\Item;
 use HWW\MenuCreate\Model\ResourceModel\Item as ItemResource;
+use Magento\InventoryLowQuantityNotification\Model\ResourceModel\SourceItemConfiguration\GetData;
 
 class Collection extends AbstractCollection
 {
@@ -15,8 +16,8 @@ class Collection extends AbstractCollection
         $this->_init(Item::class, ItemResource::class);
     }
 
-    public function create(array $data = [])
-    {
-        return [];
-    }
+    // public function create(array $data = [])
+    // {
+    //     return [];
+    // }
 }

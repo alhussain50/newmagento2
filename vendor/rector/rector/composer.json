@@ -1,13 +1,13 @@
 {
     "name": "rector/rector",
-    "description": "Prefixed and PHP 7.1 downgraded version of rector/rector",
+    "description": "Instant Upgrade and Automated Refactoring of any PHP code",
     "license": "MIT",
     "bin": [
         "bin/rector"
     ],
     "require": {
-        "php": "^7.1|^8.0",
-        "phpstan/phpstan": "^1.2"
+        "php": "^7.2|^8.0",
+        "phpstan/phpstan": "^1.9.0"
     },
     "autoload": {
         "files": [
@@ -16,19 +16,16 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.12-dev"
+            "dev-main": "0.14-dev"
         }
     },
     "conflict": {
-        "phpstan/phpdoc-parser": "<1.2",
-        "rector/rector-prefixed": "*",
         "rector/rector-phpunit": "*",
         "rector/rector-symfony": "*",
         "rector/rector-doctrine": "*",
-        "rector/rector-nette": "*",
-        "rector/rector-cakephp": "*",
-        "rector/rector-laravel": "*",
-        "rector/rector-phpoffice": "*"
+        "rector/rector-phpoffice": "*",
+        "rector/rector-php-parser": "*",
+        "rector/rector-downgrade-php": "*"
     },
     "minimum-stability": "dev",
     "prefer-stable": true

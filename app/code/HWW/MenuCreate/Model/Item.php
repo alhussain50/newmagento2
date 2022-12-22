@@ -10,4 +10,8 @@ class Item extends AbstractModel
     {
         $this->_init(\HWW\MenuCreate\Model\ResourceModel\Item::class);
     }
+    public function create(array $data = [])
+    {
+        return [];
+    }
 }

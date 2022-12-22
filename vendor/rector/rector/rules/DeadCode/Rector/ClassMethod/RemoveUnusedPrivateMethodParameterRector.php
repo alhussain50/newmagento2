@@ -7,7 +7,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Param;
-use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use Rector\BetterPhpDocParser\PhpDocManipulator\PhpDocTagRemover;
@@ -19,7 +19,7 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
 /**
  * @see \Rector\Tests\DeadCode\Rector\ClassMethod\RemoveUnusedPrivateMethodParameterRector\RemoveUnusedPrivateMethodParameterRectorTest
  */
-final class RemoveUnusedPrivateMethodParameterRector extends \Rector\Core\Rector\AbstractRector
+final class RemoveUnusedPrivateMethodParameterRector extends AbstractRector
 {
     /**
      * @readonly
@@ -36,15 +36,15 @@ final class RemoveUnusedPrivateMethodParameterRector extends \Rector\Core\Rector
      * @var \Rector\BetterPhpDocParser\PhpDocManipulator\PhpDocTagRemover
      */
     private $phpDocTagRemover;
-    public function __construct(\Rector\DeadCode\NodeManipulator\VariadicFunctionLikeDetector $variadicFunctionLikeDetector, \Rector\DeadCode\NodeCollector\UnusedParameterResolver $unusedParameterResolver, \Rector\BetterPhpDocParser\PhpDocManipulator\PhpDocTagRemover $phpDocTagRemover)
+    public function __construct(VariadicFunctionLikeDetector $variadicFunctionLikeDetector, UnusedParameterResolver $unusedParameterResolver, PhpDocTagRemover $phpDocTagRemover)
     {
         $this->variadicFunctionLikeDetector = $variadicFunctionLikeDetector;
         $this->unusedParameterResolver = $unusedParameterResolver;
         $this->phpDocTagRemover = $phpDocTagRemover;
     }
-    public function getRuleDefinition() : \Symplify\RuleDocGenerator\ValueObject\RuleDefinition
+    public function getRuleDefinition() : RuleDefinition
     {
-        return new \Symplify\RuleDocGenerator\ValueObject\RuleDefinition('Remove unused parameter, if not required by interface or parent class', [new \Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample(<<<'CODE_SAMPLE'
+        return new RuleDefinition('Remove unused parameter, if not required by interface or parent class', [new CodeSample(<<<'CODE_SAMPLE'
 class SomeClass
 {
     private function run($value, $value2)
@@ -69,43 +69,54 @@ CODE_SAMPLE
      */
     public function getNodeTypes() : array
     {
-        return [\PhpParser\Node\Stmt\ClassMethod::class];
+        return [Class_::class];
     }
     /**
-     * @param ClassMethod $node
+     * @param Class_ $node
      */
-    public function refactor(\PhpParser\Node $node) : ?\PhpParser\Node
+    public function refactor(Node $node) : ?Node
     {
-        if ($this->shouldSkip($node)) {
-            return null;
+        $hasChanged = \false;
+        foreach ($node->getMethods() as $classMethod) {
+            if ($this->shouldSkipClassMethod($classMethod)) {
+                continue;
+            }
+            $unusedParameters = $this->unusedParameterResolver->resolve($classMethod);
+            if ($unusedParameters === []) {
+                continue;
+            }
+            $unusedParameterPositions = \array_keys($unusedParameters);
+            foreach (\array_keys($classMethod->params) as $key) {
+                if (!\in_array($key, $unusedParameterPositions, \true)) {
+                    continue;
+                }
+                unset($classMethod->params[$key]);
+            }
+            // reset param keys
+            $classMethod->params = \array_values($classMethod->params);
+            $this->clearPhpDocInfo($classMethod, $unusedParameters);
+            $this->removeCallerArgs($node, $classMethod, $unusedParameters);
+            $hasChanged = \true;
         }
-        $unusedParameters = $this->unusedParameterResolver->resolve($node);
-        if ($unusedParameters === []) {
-            return null;
+        if ($hasChanged) {
+            return $node;
         }
-        $this->removeNodes($unusedParameters);
-        $this->clearPhpDocInfo($node, $unusedParameters);
-        $this->removeCallerArgs($node, $unusedParameters);
-        return $node;
+        return null;
     }
     /**
      * @param Param[] $unusedParameters
      */
-    private function removeCallerArgs(\PhpParser\Node\Stmt\ClassMethod $classMethod, array $unusedParameters) : void
+    private function removeCallerArgs(Class_ $class, ClassMethod $classMethod, array $unusedParameters) : void
     {
-        $classLike = $this->betterNodeFinder->findParentType($classMethod, \PhpParser\Node\Stmt\ClassLike::class);
-        if (!$classLike instanceof \PhpParser\Node\Stmt\ClassLike) {
-            return;
-        }
-        $methods = $classLike->getMethods();
-        if ($methods === []) {
+        $classMethods = $class->getMethods();
+        if ($classMethods === []) {
             return;
         }
         $methodName = $this->nodeNameResolver->getName($classMethod);
         $keysArg = \array_keys($unusedParameters);
-        foreach ($methods as $method) {
+        foreach ($classMethods as $classMethod) {
             /** @var MethodCall[] $callers */
-            $callers = $this->resolveCallers($method, $methodName);
+            $callers = $this->resolveCallers($classMethod, $methodName);
             if ($callers === []) {
                 continue;
             }
@@ -117,26 +128,33 @@ CODE_SAMPLE
     /**
      * @param int[] $keysArg
      */
-    private function cleanupArgs(\PhpParser\Node\Expr\MethodCall $methodCall, array $keysArg) : void
+    private function cleanupArgs(MethodCall $methodCall, array $keysArg) : void
     {
+        if ($methodCall->isFirstClassCallable()) {
+            return;
+        }
         $args = $methodCall->getArgs();
         foreach (\array_keys($args) as $key) {
             if (\in_array($key, $keysArg, \true)) {
                 unset($args[$key]);
             }
         }
-        $methodCall->args = $args;
+        // reset arg keys
+        $methodCall->args = \array_values($args);
     }
     /**
      * @return MethodCall[]
      */
-    private function resolveCallers(\PhpParser\Node\Stmt\ClassMethod $classMethod, string $methodName) : array
+    private function resolveCallers(ClassMethod $classMethod, string $methodName) : array
     {
-        return $this->betterNodeFinder->find($classMethod, function (\PhpParser\Node $subNode) use($methodName) : bool {
-            if (!$subNode instanceof \PhpParser\Node\Expr\MethodCall) {
+        return $this->betterNodeFinder->find($classMethod, function (Node $subNode) use($methodName) : bool {
+            if (!$subNode instanceof MethodCall) {
                 return \false;
             }
-            if (!$subNode->var instanceof \PhpParser\Node\Expr\Variable) {
+            if ($subNode->isFirstClassCallable()) {
+                return \false;
+            }
+            if (!$subNode->var instanceof Variable) {
                 return \false;
             }
             if (!$this->nodeNameResolver->isName($subNode->var, 'this')) {
@@ -145,7 +163,7 @@ CODE_SAMPLE
             return $this->nodeNameResolver->isName($subNode->name, $methodName);
         });
     }
-    private function shouldSkip(\PhpParser\Node\Stmt\ClassMethod $classMethod) : bool
+    private function shouldSkipClassMethod(ClassMethod $classMethod) : bool
     {
         if (!$classMethod->isPrivate()) {
             return \true;
@@ -158,7 +176,7 @@ CODE_SAMPLE
     /**
      * @param Param[] $unusedParameters
      */
-    private function clearPhpDocInfo(\PhpParser\Node\Stmt\ClassMethod $classMethod, array $unusedParameters) : void
+    private function clearPhpDocInfo(ClassMethod $classMethod, array $unusedParameters) : void
     {
         $phpDocInfo = $this->phpDocInfoFactory->createFromNodeOrEmpty($classMethod);
         foreach ($unusedParameters as $unusedParameter) {
@@ -167,7 +185,7 @@ CODE_SAMPLE
                 continue;
             }
             $paramTagValueNode = $phpDocInfo->getParamTagValueByName($parameterName);
-            if (!$paramTagValueNode instanceof \PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode) {
+            if (!$paramTagValueNode instanceof ParamTagValueNode) {
                 continue;
             }
             if ($paramTagValueNode->parameterName !== '$' . $parameterName) {

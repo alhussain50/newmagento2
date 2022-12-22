@@ -1,4 +1,4 @@
-# 28 Rules Overview
+# 30 Rules Overview
 
 ## AddEntityIdByConditionRector
 
@@ -9,19 +9,11 @@ Add entity id with annotations when meets condition
 - class: [`Rector\Doctrine\Rector\Class_\AddEntityIdByConditionRector`](../src/Rector/Class_/AddEntityIdByConditionRector.php)
 
 ```php
+use Rector\Config\RectorConfig;
 use Rector\Doctrine\Rector\Class_\AddEntityIdByConditionRector;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-return static function (ContainerConfigurator $containerConfigurator): void {
-    $services = $containerConfigurator->services();
-
-    $services->set(AddEntityIdByConditionRector::class)
-        ->configure([
-            AddEntityIdByConditionRector::DETECTED_TRAITS => [
-                'Knp\DoctrineBehaviors\Model\Translatable\Translation',
-                'Knp\DoctrineBehaviors\Model\Translatable\TranslationTrait',
-            ],
-        ]);
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->ruleWithConfiguration(AddEntityIdByConditionRector::class, [Rector\Doctrine\Rector\Class_\AddEntityIdByConditionRector::DETECTED_TRAITS: ['Knp\DoctrineBehaviors\Model\Translatable\Translation', 'Knp\DoctrineBehaviors\Model\Translatable\TranslationTrait']]);
 };
 ```
 
@@ -215,6 +207,27 @@ Change default value types to match Doctrine annotation type
  }
 ```
 
+## DoctrineTargetEntityStringToClassConstantRector
+
+Convert targetEntities defined as String to <class>::class Constants in Doctrine Entities.
+
+- class: [`Rector\Doctrine\Rector\Property\DoctrineTargetEntityStringToClassConstantRector`](../src/Rector/Property/DoctrineTargetEntityStringToClassConstantRector.php)
+
+```diff
+final class SomeClass
+{
+     /**
+-     * @ORM\OneToMany(targetEntity="AnotherClass")
++     * @ORM\OneToMany(targetEntity=\MyNamespace\Source\AnotherClass::class)
+      */
+     private readonly ?Collection $items;
+
+-    #[ORM\ManyToOne(targetEntity: "AnotherClass")]
++    #[ORM\ManyToOne(targetEntity: \MyNamespace\Source\AnotherClass::class)]
+     private readonly ?Collection $items2;
+ }
+```
+
 <br>
 
 ## EntityAliasToClassConstantReferenceRector
@@ -226,19 +239,11 @@ Replaces doctrine alias with class.
 - class: [`Rector\Doctrine\Rector\MethodCall\EntityAliasToClassConstantReferenceRector`](../src/Rector/MethodCall/EntityAliasToClassConstantReferenceRector.php)
 
 ```php
+use Rector\Config\RectorConfig;
 use Rector\Doctrine\Rector\MethodCall\EntityAliasToClassConstantReferenceRector;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-return static function (ContainerConfigurator $containerConfigurator): void {
-    $services = $containerConfigurator->services();
-
-    $services->set(EntityAliasToClassConstantReferenceRector::class)
-        ->configure([
-            EntityAliasToClassConstantReferenceRector::ALIASES_TO_NAMESPACES => [
-                'App' => 'App\Entity',
-
-            ],
-        ]);
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->ruleWithConfiguration(EntityAliasToClassConstantReferenceRector::class, [Rector\Doctrine\Rector\MethodCall\EntityAliasToClassConstantReferenceRector::ALIASES_TO_NAMESPACES: ['App' => 'App\Entity']]);
 };
 ```
 
@@ -516,7 +521,7 @@ Removes redundant default values from Doctrine ORM annotations on class level
 
 ## RemoveRedundantDefaultPropertyAnnotationValuesRector
 
-Removes redundant default values from Doctrine ORM annotations on class property level
+Removes redundant default values from Doctrine ORM annotations/attributes properties
 
 - class: [`Rector\Doctrine\Rector\Property\RemoveRedundantDefaultPropertyAnnotationValuesRector`](../src/Rector/Property/RemoveRedundantDefaultPropertyAnnotationValuesRector.php)
 
@@ -867,6 +872,27 @@ Complete `@var` annotations or types based on @ORM\Column
       */
 -    private $name;
 +    private string|null $name = null;
+ }
+```
+
+<br>
+
+## TypedPropertyFromToOneRelationTypeRector
+
+Complete `@var` annotations or types based on @ORM\*toOne annotations or attributes
+
+- class: [`Rector\Doctrine\Rector\Property\TypedPropertyFromToOneRelationTypeRector`](../src/Rector/Property/TypedPropertyFromToOneRelationTypeRector.php)
+
+```diff
+ use Doctrine\ORM\Mapping as ORM;
+
+ class SimpleColumn
+ {
+     /**
+      * @ORM\OneToOne(targetEntity="App\Company\Entity\Company")
+      */
+-    private $company;
++    private ?\App\Company\Entity\Company $company = null;
  }
 ```
 

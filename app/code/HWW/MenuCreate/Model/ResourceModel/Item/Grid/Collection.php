@@ -14,7 +14,7 @@ class Collection extends SearchResult{
         Logger $logger,
         FetchStrategy $fetchStrategy,
         EventManager $eventManager,
-        $mainTable = 'hww_testimonials',
+        $mainTable = 'hww_glossary',
         $resourceModel = 'HWW\MenuCreate\Model\ResourceModel\Item'
     )
     {

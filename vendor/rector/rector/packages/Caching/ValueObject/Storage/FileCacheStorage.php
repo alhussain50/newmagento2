@@ -4,31 +4,30 @@ declare (strict_types=1);
 namespace Rector\Caching\ValueObject\Storage;
 
 use FilesystemIterator;
-use RectorPrefix20211221\Nette\Utils\FileSystem;
-use RectorPrefix20211221\Nette\Utils\Random;
+use RectorPrefix202211\Nette\Utils\FileSystem;
+use RectorPrefix202211\Nette\Utils\Random;
 use Rector\Caching\Contract\ValueObject\Storage\CacheStorageInterface;
 use Rector\Caching\ValueObject\CacheFilePaths;
 use Rector\Caching\ValueObject\CacheItem;
 use Rector\Core\Exception\Cache\CachingException;
-use RectorPrefix20211221\Symplify\SmartFileSystem\SmartFileSystem;
 /**
  * Inspired by https://github.com/phpstan/phpstan-src/blob/1e7ceae933f07e5a250b61ed94799e6c2ea8daa2/src/Cache/FileCacheStorage.php
  * @see \Rector\Tests\Caching\ValueObject\Storage\FileCacheStorageTest
  */
-final class FileCacheStorage implements \Rector\Caching\Contract\ValueObject\Storage\CacheStorageInterface
+final class FileCacheStorage implements CacheStorageInterface
 {
     /**
      * @var string
      */
     private $directory;
     /**
-     * @var \Symplify\SmartFileSystem\SmartFileSystem
+     * @var \Symfony\Component\Filesystem\Filesystem
      */
-    private $smartFileSystem;
-    public function __construct(string $directory, \RectorPrefix20211221\Symplify\SmartFileSystem\SmartFileSystem $smartFileSystem)
+    private $filesystem;
+    public function __construct(string $directory, \RectorPrefix202211\Symfony\Component\Filesystem\Filesystem $filesystem)
     {
         $this->directory = $directory;
-        $this->smartFileSystem = $smartFileSystem;
+        $this->filesystem = $filesystem;
     }
     public function load(string $key, string $variableKey)
     {
@@ -39,7 +38,7 @@ final class FileCacheStorage implements \Rector\Caching\Contract\ValueObject\Sto
                 return null;
             }
             $cacheItem = (require $filePath);
-            if (!$cacheItem instanceof \Rector\Caching\ValueObject\CacheItem) {
+            if (!$cacheItem instanceof CacheItem) {
                 return null;
             }
             if (!$cacheItem->isVariableKeyValid($variableKey)) {
@@ -48,28 +47,31 @@ final class FileCacheStorage implements \Rector\Caching\Contract\ValueObject\Sto
             return $cacheItem->getData();
         })($key, $variableKey);
     }
+    /**
+     * @param mixed $data
+     */
     public function save(string $key, string $variableKey, $data) : void
     {
         $cacheFilePaths = $this->getCacheFilePaths($key);
-        $this->smartFileSystem->mkdir($cacheFilePaths->getFirstDirectory());
-        $this->smartFileSystem->mkdir($cacheFilePaths->getSecondDirectory());
+        $this->filesystem->mkdir($cacheFilePaths->getFirstDirectory());
+        $this->filesystem->mkdir($cacheFilePaths->getSecondDirectory());
         $path = $cacheFilePaths->getFilePath();
-        $tmpPath = \sprintf('%s/%s.tmp', $this->directory, \RectorPrefix20211221\Nette\Utils\Random::generate());
+        $tmpPath = \sprintf('%s/%s.tmp', $this->directory, Random::generate());
         $errorBefore = \error_get_last();
-        $exported = @\var_export(new \Rector\Caching\ValueObject\CacheItem($variableKey, $data), \true);
+        $exported = @\var_export(new CacheItem($variableKey, $data), \true);
         $errorAfter = \error_get_last();
         if ($errorAfter !== null && $errorBefore !== $errorAfter) {
-            throw new \Rector\Core\Exception\Cache\CachingException(\sprintf('Error occurred while saving item %s (%s) to cache: %s', $key, $variableKey, $errorAfter['message']));
+            throw new CachingException(\sprintf('Error occurred while saving item %s (%s) to cache: %s', $key, $variableKey, $errorAfter['message']));
         }
         // for performance reasons we don't use SmartFileSystem
-        \RectorPrefix20211221\Nette\Utils\FileSystem::write($tmpPath, \sprintf("<?php declare(strict_types = 1);\n\nreturn %s;", $exported));
+        FileSystem::write($tmpPath, \sprintf("<?php declare(strict_types = 1);\n\nreturn %s;", $exported));
         $renameSuccess = @\rename($tmpPath, $path);
         if ($renameSuccess) {
             return;
         }
         @\unlink($tmpPath);
         if (\DIRECTORY_SEPARATOR === '/' || !\file_exists($path)) {
-            throw new \Rector\Core\Exception\Cache\CachingException(\sprintf('Could not write data to cache file %s.', $path));
+            throw new CachingException(\sprintf('Could not write data to cache file %s.', $path));
         }
     }
     public function clean(string $key) : void
@@ -81,38 +83,38 @@ final class FileCacheStorage implements \Rector\Caching\Contract\ValueObject\Sto
     }
     public function clear() : void
     {
-        $this->smartFileSystem->remove($this->directory);
+        $this->filesystem->remove($this->directory);
     }
-    private function processRemoveCacheFilePath(\Rector\Caching\ValueObject\CacheFilePaths $cacheFilePaths) : void
+    private function processRemoveCacheFilePath(CacheFilePaths $cacheFilePaths) : void
     {
         $filePath = $cacheFilePaths->getFilePath();
-        if (!$this->smartFileSystem->exists($filePath)) {
+        if (!$this->filesystem->exists($filePath)) {
             return;
         }
-        $this->smartFileSystem->remove($filePath);
+        $this->filesystem->remove($filePath);
     }
     private function processRemoveEmptyDirectory(string $directory) : void
     {
-        if (!$this->smartFileSystem->exists($directory)) {
+        if (!$this->filesystem->exists($directory)) {
             return;
         }
         if ($this->isNotEmptyDirectory($directory)) {
             return;
         }
-        $this->smartFileSystem->remove($directory);
+        $this->filesystem->remove($directory);
     }
     private function isNotEmptyDirectory(string $directory) : bool
     {
         // FilesystemIterator will initially point to the first file in the folder - if there are no files in the folder, valid() will return false
-        $filesystemIterator = new \FilesystemIterator($directory);
+        $filesystemIterator = new FilesystemIterator($directory);
         return $filesystemIterator->valid();
     }
-    private function getCacheFilePaths(string $key) : \Rector\Caching\ValueObject\CacheFilePaths
+    private function getCacheFilePaths(string $key) : CacheFilePaths
     {
         $keyHash = \sha1($key);
         $firstDirectory = \sprintf('%s/%s', $this->directory, \substr($keyHash, 0, 2));
         $secondDirectory = \sprintf('%s/%s', $firstDirectory, \substr($keyHash, 2, 2));
         $filePath = \sprintf('%s/%s.php', $secondDirectory, $keyHash);
-        return new \Rector\Caching\ValueObject\CacheFilePaths($firstDirectory, $secondDirectory, $filePath);
+        return new CacheFilePaths($firstDirectory, $secondDirectory, $filePath);
     }
 }

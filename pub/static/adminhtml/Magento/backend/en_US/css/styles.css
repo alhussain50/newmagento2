@@ -15689,6 +15689,39 @@ div[data-content-type='tabs'] .tabs-content {
   height: 0;
   opacity: 0;
 }
+.paypal-styling-buttons button,
+.paypal-styling-buttons .block-footer .action-add {
+  margin: 5px;
+}
+@font-face {
+  font-family: 'toogas-icon';
+  src: url('../Toogas_AbTesting/fonts/toogas-icon.woff2') format('woff2'), url('../Toogas_AbTesting/fonts/toogas-icon.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: auto;
+}
+.admin__menu .item-marketing [data-ui-id='menu-toogas-abtesting-management'] .submenu-group-title:before {
+  content: '.';
+  font-family: 'toogas-icon';
+  font-size: 23px;
+  padding-right: 1rem;
+  vertical-align: middle;
+}
+.fieldset-wrapper .chart-container {
+  height: 400px;
+  position: relative;
+}
+.fieldset-wrapper .top-chart-container {
+  display: -webkit-grid;
+  display: -ms-gridbox;
+  display: grid;
+  grid-template-columns: 25% 25% 25% 25%;
+  margin-bottom: 2rem !important;
+}
+.fieldset-wrapper .top-chart-container .chart-container {
+  text-align: center;
+  height: 200px;
+}
 .admin-usage-notification {
   -webkit-transition: visibility 0s .5s, opacity .5s ease;
   transition: visibility 0s .5s, opacity .5s ease;
@@ -22455,7 +22488,7 @@ fieldset[disabled] .release-notification-button-back {
   width: 100%;
 }
 .data-grid-cell-content.white-space-preserved {
-  white-space: pre;
+  white-space: pre-wrap;
 }
 body._in-resize {
   -moz-user-select: none;

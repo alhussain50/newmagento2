@@ -17,7 +17,6 @@ return [
         'Magento_AdvancedPricingImportExport' => 1,
         'Magento_Theme' => 1,
         'Magento_Amqp' => 1,
-        'Magento_AmqpStore' => 1,
         'Magento_Config' => 1,
         'Magento_Backend' => 1,
         'Magento_Authorization' => 1,
@@ -98,6 +97,7 @@ return [
         'Magento_GiftMessageGraphQl' => 1,
         'Magento_GoogleAdwords' => 1,
         'Magento_GoogleAnalytics' => 1,
+        'Magento_GoogleGtag' => 1,
         'Magento_Ui' => 1,
         'Magento_GoogleShoppingAds' => 1,
         'Magento_BundleGraphQl' => 1,
@@ -346,12 +346,17 @@ return [
         'Magento_WishlistSampleData' => 1,
         'HWW_HelloWorld' => 1,
         'HWW_MenuCreate' => 1,
+        'HWW_Tutorial' => 1,
         'Harriswebworks_Core' => 1,
         'Harriswebworks_AdobeSignCheckout' => 1,
+        'Harriswebworks_CategoryClassification' => 1,
         'HWW_testimonial' => 1,
+        'Harriswebworks_Glossary' => 1,
+        'Harriswebworks_Slider' => 1,
         'PayPal_Braintree' => 1,
         'PayPal_BraintreeGraphQl' => 1,
         'Temando_ShippingRemover' => 1,
+        'Toogas_AbTesting' => 1,
         'test_module' => 1
     ]
 ];

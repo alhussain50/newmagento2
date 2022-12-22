@@ -3,24 +3,25 @@
 declare (strict_types=1);
 namespace Rector\Core\DependencyInjection\Collector;
 
+use Rector\Core\Console\Style\SymfonyStyleFactory;
 use Rector\Core\Contract\Rector\ConfigurableRectorInterface;
+use Rector\Core\Util\ArrayParametersMerger;
+use Rector\Core\Util\Reflection\PrivatesAccessor;
 use ReflectionClass;
 use ReflectionClassConstant;
-use RectorPrefix20211221\Symfony\Component\Console\Style\SymfonyStyle;
-use RectorPrefix20211221\Symfony\Component\DependencyInjection\Definition;
-use RectorPrefix20211221\Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory;
-use RectorPrefix20211221\Symplify\PackageBuilder\Yaml\ParametersMerger;
+use RectorPrefix202211\Symfony\Component\Console\Style\SymfonyStyle;
+use RectorPrefix202211\Symfony\Component\DependencyInjection\Definition;
 final class ConfigureCallValuesCollector
 {
     /**
-     * @var mixed[]
+     * @var array<string, mixed[]>
      */
     private $configureCallValuesByRectorClass = [];
     /**
      * @readonly
-     * @var \Symplify\PackageBuilder\Yaml\ParametersMerger
+     * @var \Rector\Core\Util\ArrayParametersMerger
      */
-    private $parametersMerger;
+    private $arrayParametersMerger;
     /**
      * @readonly
      * @var \Symfony\Component\Console\Style\SymfonyStyle
@@ -28,8 +29,8 @@ final class ConfigureCallValuesCollector
     private $symfonyStyle;
     public function __construct()
     {
-        $this->parametersMerger = new \RectorPrefix20211221\Symplify\PackageBuilder\Yaml\ParametersMerger();
-        $symfonyStyleFactory = new \RectorPrefix20211221\Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory();
+        $this->arrayParametersMerger = new ArrayParametersMerger();
+        $symfonyStyleFactory = new SymfonyStyleFactory(new PrivatesAccessor());
         $this->symfonyStyle = $symfonyStyleFactory->create();
     }
     /**
@@ -42,7 +43,7 @@ final class ConfigureCallValuesCollector
     /**
      * @param class-string<ConfigurableRectorInterface> $className
      */
-    public function collectFromServiceAndClassName(string $className, \RectorPrefix20211221\Symfony\Component\DependencyInjection\Definition $definition) : void
+    public function collectFromServiceAndClassName(string $className, Definition $definition) : void
     {
         foreach ($definition->getMethodCalls() as $methodCall) {
             if ($methodCall[0] !== 'configure') {
@@ -65,7 +66,7 @@ final class ConfigureCallValuesCollector
                 if (\is_string($firstKey) && \is_array($configureValue[$firstKey])) {
                     // has class some public constants?
                     // fixes bug when 1 item is unwrapped and treated as constant key, without rule having public constant
-                    $classReflection = new \ReflectionClass($rectorClass);
+                    $classReflection = new ReflectionClass($rectorClass);
                     $reflectionClassConstants = $classReflection->getReflectionConstants();
                     $result = [];
                     \array_walk($reflectionClassConstants, function ($value) use(&$result) {
@@ -83,7 +84,7 @@ final class ConfigureCallValuesCollector
                             if (\strpos((string) $reflectionConstant->getDocComment(), '@deprecated') === \false) {
                                 continue;
                             }
-                            $warningMessage = \sprintf('The constant for "%s::%s" is deprecated.%sUse "->configure()" directly instead.', $rectorClass, $constantName, \PHP_EOL);
+                            $warningMessage = \sprintf('The constant for "%s::%s" is deprecated.%sUse "$rectorConfig->ruleWithConfiguration()" instead.', $rectorClass, $constantName, \PHP_EOL);
                             $this->symfonyStyle->warning($warningMessage);
                             $configureValue = $configureValue[$firstKey];
                             break;
@@ -94,7 +95,7 @@ final class ConfigureCallValuesCollector
             if (!isset($this->configureCallValuesByRectorClass[$rectorClass])) {
                 $this->configureCallValuesByRectorClass[$rectorClass] = $configureValue;
             } else {
-                $mergedParameters = $this->parametersMerger->merge($this->configureCallValuesByRectorClass[$rectorClass], $configureValue);
+                $mergedParameters = $this->arrayParametersMerger->merge($this->configureCallValuesByRectorClass[$rectorClass], $configureValue);
                 $this->configureCallValuesByRectorClass[$rectorClass] = $mergedParameters;
             }
         }

@@ -3,34 +3,33 @@
 declare (strict_types=1);
 namespace Rector\Symfony\DataProvider;
 
+use Rector\Core\Configuration\Option;
+use Rector\Core\Configuration\Parameter\ParameterProvider;
 use Rector\Symfony\ValueObject\ServiceMap\ServiceMap;
 use Rector\Symfony\ValueObjectFactory\ServiceMapFactory;
-use RectorPrefix20211221\Symplify\PackageBuilder\Parameter\ParameterProvider;
 /**
  * Inspired by https://github.com/phpstan/phpstan-symfony/tree/master/src/Symfony
  */
 final class ServiceMapProvider
 {
     /**
-     * @var string
-     */
-    private const SYMFONY_CONTAINER_XML_PATH_PARAMETER = 'symfony_container_xml_path';
-    /**
-     * @var \Symplify\PackageBuilder\Parameter\ParameterProvider
+     * @readonly
+     * @var \Rector\Core\Configuration\Parameter\ParameterProvider
      */
     private $parameterProvider;
     /**
+     * @readonly
      * @var \Rector\Symfony\ValueObjectFactory\ServiceMapFactory
      */
     private $serviceMapFactory;
-    public function __construct(\RectorPrefix20211221\Symplify\PackageBuilder\Parameter\ParameterProvider $parameterProvider, \Rector\Symfony\ValueObjectFactory\ServiceMapFactory $serviceMapFactory)
+    public function __construct(ParameterProvider $parameterProvider, ServiceMapFactory $serviceMapFactory)
     {
         $this->parameterProvider = $parameterProvider;
         $this->serviceMapFactory = $serviceMapFactory;
     }
-    public function provide() : \Rector\Symfony\ValueObject\ServiceMap\ServiceMap
+    public function provide() : ServiceMap
     {
-        $symfonyContainerXmlPath = (string) $this->parameterProvider->provideParameter(self::SYMFONY_CONTAINER_XML_PATH_PARAMETER);
+        $symfonyContainerXmlPath = (string) $this->parameterProvider->provideParameter(Option::SYMFONY_CONTAINER_XML_PATH_PARAMETER);
         if ($symfonyContainerXmlPath === '') {
             return $this->serviceMapFactory->createEmpty();
         }

@@ -4,6 +4,7 @@ declare (strict_types=1);
 namespace Rector\CodeQuality\Rector\BooleanAnd;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\Identical;
@@ -15,53 +16,88 @@ use Rector\Php71\ValueObject\TwoNodeMatch;
 use Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample;
 use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
 /**
- * @see https://3v4l.org/EZ2P4
- * @see https://3v4l.org/egtb5
+ * @changelog https://3v4l.org/EZ2P4
+ * @changelog https://3v4l.org/egtb5
  * @see \Rector\Tests\CodeQuality\Rector\BooleanAnd\SimplifyEmptyArrayCheckRector\SimplifyEmptyArrayCheckRectorTest
  */
-final class SimplifyEmptyArrayCheckRector extends \Rector\Core\Rector\AbstractRector
+final class SimplifyEmptyArrayCheckRector extends AbstractRector
 {
     /**
      * @readonly
      * @var \Rector\Core\NodeManipulator\BinaryOpManipulator
      */
     private $binaryOpManipulator;
-    public function __construct(\Rector\Core\NodeManipulator\BinaryOpManipulator $binaryOpManipulator)
+    public function __construct(BinaryOpManipulator $binaryOpManipulator)
     {
         $this->binaryOpManipulator = $binaryOpManipulator;
     }
-    public function getRuleDefinition() : \Symplify\RuleDocGenerator\ValueObject\RuleDefinition
+    public function getRuleDefinition() : RuleDefinition
     {
-        return new \Symplify\RuleDocGenerator\ValueObject\RuleDefinition('Simplify `is_array` and `empty` functions combination into a simple identical check for an empty array', [new \Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample('is_array($values) && empty($values)', '$values === []')]);
+        return new RuleDefinition('Simplify `is_array` and `empty` functions combination into a simple identical check for an empty array', [new CodeSample('is_array($values) && empty($values)', '$values === []')]);
     }
     /**
      * @return array<class-string<Node>>
      */
     public function getNodeTypes() : array
     {
-        return [\PhpParser\Node\Expr\BinaryOp\BooleanAnd::class];
+        return [BooleanAnd::class];
     }
     /**
      * @param BooleanAnd $node
      */
-    public function refactor(\PhpParser\Node $node) : ?\PhpParser\Node
+    public function refactor(Node $node) : ?Node
     {
-        $twoNodeMatch = $this->binaryOpManipulator->matchFirstAndSecondConditionNode(
-            $node,
-            // is_array(...)
-            function (\PhpParser\Node $node) : bool {
-                if (!$node instanceof \PhpParser\Node\Expr\FuncCall) {
-                    return \false;
-                }
-                return $this->isName($node, 'is_array');
-            },
-            \PhpParser\Node\Expr\Empty_::class
-        );
-        if (!$twoNodeMatch instanceof \Rector\Php71\ValueObject\TwoNodeMatch) {
+        $twoNodeMatch = $this->resolvetwoNodeMatch($node);
+        if (!$twoNodeMatch instanceof TwoNodeMatch) {
             return null;
         }
+        /** @var FuncCall $isArrayExpr */
+        $isArrayExpr = $twoNodeMatch->getFirstExpr();
+        /** @var Expr $firstArgValue */
+        $firstArgValue = $isArrayExpr->args[0]->value;
         /** @var Empty_ $emptyOrNotIdenticalNode */
         $emptyOrNotIdenticalNode = $twoNodeMatch->getSecondExpr();
-        return new \PhpParser\Node\Expr\BinaryOp\Identical($emptyOrNotIdenticalNode->expr, new \PhpParser\Node\Expr\Array_());
+        if ($emptyOrNotIdenticalNode->expr instanceof FuncCall && $this->nodeComparator->areNodesEqual($emptyOrNotIdenticalNode->expr->args[0]->value, $firstArgValue)) {
+            return new Identical($emptyOrNotIdenticalNode->expr, new Array_());
+        }
+        if (!$this->nodeComparator->areNodesEqual($emptyOrNotIdenticalNode->expr, $firstArgValue)) {
+            return null;
+        }
+        return new Identical($emptyOrNotIdenticalNode->expr, new Array_());
+    }
+    private function resolvetwoNodeMatch(BooleanAnd $booleanAnd) : ?TwoNodeMatch
+    {
+        return $this->binaryOpManipulator->matchFirstAndSecondConditionNode(
+            $booleanAnd,
+            // is_array(...)
+            function (Node $node) : bool {
+                if (!$node instanceof FuncCall) {
+                    return \false;
+                }
+                if ($node->isFirstClassCallable()) {
+                    return \false;
+                }
+                if (!$this->isName($node, 'is_array')) {
+                    return \false;
+                }
+                return isset($node->args[0]);
+            },
+            // empty(...)
+            function (Node $node) : bool {
+                if (!$node instanceof Empty_) {
+                    return \false;
+                }
+                if ($node->expr instanceof FuncCall) {
+                    if ($node->expr->isFirstClassCallable()) {
+                        return \false;
+                    }
+                    if (!$this->isName($node->expr, 'array_filter')) {
+                        return \false;
+                    }
+                    return isset($node->expr->args[0]);
+                }
+                return \true;
+            }
+        );
     }
 }

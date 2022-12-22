@@ -27,11 +27,13 @@ final class ReplaceParentCallByPropertyCall
         $this->class = $class;
         $this->method = $method;
         $this->property = $property;
-        \Rector\Core\Validation\RectorAssert::className($class);
+        RectorAssert::className($class);
+        RectorAssert::methodName($method);
+        RectorAssert::propertyName($property);
     }
-    public function getObjectType() : \PHPStan\Type\ObjectType
+    public function getObjectType() : ObjectType
     {
-        return new \PHPStan\Type\ObjectType($this->class);
+        return new ObjectType($this->class);
     }
     public function getMethod() : string
     {

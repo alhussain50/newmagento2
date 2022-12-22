@@ -8,6 +8,6 @@ class Item extends AbstractDb
 {
     protected function _construct()
     {
-        $this->_init('hww_testimonials', 'id');
+        $this->_init('hww_glossary', 'id');
     }
 }

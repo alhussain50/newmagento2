@@ -5,21 +5,23 @@ namespace Rector\PHPStanStaticTypeMapper\TypeMapper;
 
 use PhpParser\Node;
 use PhpParser\Node\Name;
+use PhpParser\Node\Name\FullyQualified;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\IntersectionType;
+use PHPStan\Type\ObjectType;
+use PHPStan\Type\ObjectWithoutClassType;
 use PHPStan\Type\Type;
 use Rector\BetterPhpDocParser\ValueObject\Type\BracketsAwareIntersectionTypeNode;
-use Rector\Core\Exception\ShouldNotHappenException;
 use Rector\Core\Php\PhpVersionProvider;
 use Rector\Core\ValueObject\PhpVersionFeature;
 use Rector\PHPStanStaticTypeMapper\Contract\TypeMapperInterface;
-use Rector\PHPStanStaticTypeMapper\Enum\TypeKind;
 use Rector\PHPStanStaticTypeMapper\PHPStanStaticTypeMapper;
-use RectorPrefix20211221\Symfony\Contracts\Service\Attribute\Required;
+use RectorPrefix202211\Symfony\Contracts\Service\Attribute\Required;
 /**
  * @implements TypeMapperInterface<IntersectionType>
  */
-final class IntersectionTypeMapper implements \Rector\PHPStanStaticTypeMapper\Contract\TypeMapperInterface
+final class IntersectionTypeMapper implements TypeMapperInterface
 {
     /**
      * @var \Rector\PHPStanStaticTypeMapper\PHPStanStaticTypeMapper
@@ -30,14 +32,20 @@ final class IntersectionTypeMapper implements \Rector\PHPStanStaticTypeMapper\Co
      * @var \Rector\Core\Php\PhpVersionProvider
      */
     private $phpVersionProvider;
-    public function __construct(\Rector\Core\Php\PhpVersionProvider $phpVersionProvider)
+    /**
+     * @readonly
+     * @var \PHPStan\Reflection\ReflectionProvider
+     */
+    private $reflectionProvider;
+    public function __construct(PhpVersionProvider $phpVersionProvider, ReflectionProvider $reflectionProvider)
     {
         $this->phpVersionProvider = $phpVersionProvider;
+        $this->reflectionProvider = $reflectionProvider;
     }
     /**
      * @required
      */
-    public function autowire(\Rector\PHPStanStaticTypeMapper\PHPStanStaticTypeMapper $phpStanStaticTypeMapper) : void
+    public function autowire(PHPStanStaticTypeMapper $phpStanStaticTypeMapper) : void
     {
         $this->phpStanStaticTypeMapper = $phpStanStaticTypeMapper;
     }
@@ -46,12 +54,12 @@ final class IntersectionTypeMapper implements \Rector\PHPStanStaticTypeMapper\Co
      */
     public function getNodeClass() : string
     {
-        return \PHPStan\Type\IntersectionType::class;
+        return IntersectionType::class;
     }
     /**
      * @param IntersectionType $type
      */
-    public function mapToPHPStanPhpDocTypeNode(\PHPStan\Type\Type $type, \Rector\PHPStanStaticTypeMapper\Enum\TypeKind $typeKind) : \PHPStan\PhpDocParser\Ast\Type\TypeNode
+    public function mapToPHPStanPhpDocTypeNode(Type $type, string $typeKind) : TypeNode
     {
         $intersectionTypesNodes = [];
         foreach ($type->getTypes() as $intersectionedType) {
@@ -61,24 +69,57 @@ final class IntersectionTypeMapper implements \Rector\PHPStanStaticTypeMapper\Co
         if (\count($intersectionTypesNodes) === 1) {
             return $intersectionTypesNodes[0];
         }
-        return new \Rector\BetterPhpDocParser\ValueObject\Type\BracketsAwareIntersectionTypeNode($intersectionTypesNodes);
+        return new BracketsAwareIntersectionTypeNode($intersectionTypesNodes);
     }
     /**
      * @param IntersectionType $type
      */
-    public function mapToPhpParserNode(\PHPStan\Type\Type $type, \Rector\PHPStanStaticTypeMapper\Enum\TypeKind $typeKind) : ?\PhpParser\Node
+    public function mapToPhpParserNode(Type $type, string $typeKind) : ?Node
     {
-        if (!$this->phpVersionProvider->isAtLeastPhpVersion(\Rector\Core\ValueObject\PhpVersionFeature::INTERSECTION_TYPES)) {
-            return null;
+        if (!$this->phpVersionProvider->isAtLeastPhpVersion(PhpVersionFeature::INTERSECTION_TYPES)) {
+            return $this->matchMockObjectType($type);
         }
         $intersectionedTypeNodes = [];
         foreach ($type->getTypes() as $intersectionedType) {
             $resolvedType = $this->phpStanStaticTypeMapper->mapToPhpParserNode($intersectionedType, $typeKind);
-            if (!$resolvedType instanceof \PhpParser\Node\Name) {
-                throw new \Rector\Core\Exception\ShouldNotHappenException();
+            if (!$resolvedType instanceof Name) {
+                continue;
+            }
+            $resolvedTypeName = (string) $resolvedType;
+            if ($intersectionedType instanceof ObjectWithoutClassType) {
+                return $resolvedType;
+            }
+            /**
+             * $this->reflectionProvider->hasClass($resolvedTypeName) returns true on iterable type
+             * this ensure type is ObjectType early
+             */
+            if (!$intersectionedType instanceof ObjectType) {
+                continue;
+            }
+            if (!$this->reflectionProvider->hasClass($resolvedTypeName)) {
+                continue;
             }
             $intersectionedTypeNodes[] = $resolvedType;
         }
-        return new \PhpParser\Node\IntersectionType($intersectionedTypeNodes);
+        if ($intersectionedTypeNodes === []) {
+            return null;
+        }
+        if (\count($intersectionedTypeNodes) === 1) {
+            return \current($intersectionedTypeNodes);
+        }
+        return new Node\IntersectionType($intersectionedTypeNodes);
+    }
+    private function matchMockObjectType(IntersectionType $intersectionType) : ?FullyQualified
+    {
+        // return mock object as the strict one
+        foreach ($intersectionType->getTypes() as $intersectionedType) {
+            if (!$intersectionedType instanceof ObjectType) {
+                continue;
+            }
+            if ($intersectionedType->getClassName() === 'PHPUnit\\Framework\\MockObject\\MockObject') {
+                return new FullyQualified($intersectionedType->getClassName());
+            }
+        }
+        return null;
     }
 }

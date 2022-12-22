@@ -2,6 +2,129 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 3.9.2 - 2022-12-20
+
+
+-----
+
+### Release Notes for [3.9.2](https://github.com/laminas/laminas-eventmanager/milestone/18)
+
+3.9.x bugfix release (patch)
+
+### 3.9.2
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **1**
+- Total contributors: **1**
+
+#### Bug,Documentation
+
+ - [38: Updates workflow file for docs build to use deploy token instead of legacy docs deploy key](https://github.com/laminas/laminas-eventmanager/pull/38) thanks to @froschdesign
+
+## 3.9.1 - 2022-12-20
+
+
+-----
+
+### Release Notes for [3.9.1](https://github.com/laminas/laminas-eventmanager/milestone/16)
+
+3.9.x bugfix release (patch)
+
+### 3.9.1
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **1**
+- Total contributors: **1**
+
+#### Bug,Documentation
+
+ - [36: Adds missing description for usage in a laminas-mvc based application](https://github.com/laminas/laminas-eventmanager/pull/36) thanks to @froschdesign
+
+## 3.9.0 - 2022-12-10
+
+
+-----
+
+### Release Notes for [3.9.0](https://github.com/laminas/laminas-eventmanager/milestone/15)
+
+Feature release (minor)
+
+### 3.9.0
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **1**
+- Total contributors: **1**
+
+#### Enhancement
+
+ - [32: Add generic annotations to `EventInterface`](https://github.com/laminas/laminas-eventmanager/pull/32) thanks to @villermen
+
+## 3.8.0 - 2022-12-03
+
+
+-----
+
+### Release Notes for [3.8.0](https://github.com/laminas/laminas-eventmanager/milestone/13)
+
+Feature release (minor)
+
+### 3.8.0
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **1**
+- Total contributors: **1**
+
+#### renovate
+
+ - [34: Update dependencies, document `FilterIterator` generic types](https://github.com/laminas/laminas-eventmanager/pull/34) thanks to @renovate[bot]
+
+## 3.7.0 - 2022-12-01
+
+
+-----
+
+### Release Notes for [3.7.0](https://github.com/laminas/laminas-eventmanager/milestone/11)
+
+Feature release (minor)
+
+### 3.7.0
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **1**
+- Total contributors: **1**
+
+#### Documentation,Enhancement,renovate
+
+ - [33: Update dependency vimeo/psalm to v5](https://github.com/laminas/laminas-eventmanager/pull/33) thanks to @renovate[bot]
+
+## 3.6.0 - 2022-10-11
+
+
+-----
+
+### Release Notes for [3.6.0](https://github.com/laminas/laminas-eventmanager/milestone/9)
+
+Feature release (minor)
+
+### 3.6.0
+
+- Total issues resolved: **1**
+- Total pull requests resolved: **4**
+- Total contributors: **3**
+
+#### Enhancement
+
+ - [31: Add support for PHP 8.2, Remove support for PHP 7.4](https://github.com/laminas/laminas-eventmanager/pull/31) thanks to @gsteel
+ - [29: Setup Psalm](https://github.com/laminas/laminas-eventmanager/pull/29) thanks to @gsteel and @boesing
+
+#### Awaiting Maintainer Response,renovate
+
+ - [28: chore(deps): update dependency laminas/laminas-coding-standard to ~2.3.0 - autoclosed](https://github.com/laminas/laminas-eventmanager/pull/28) thanks to @renovate[bot]
+
+#### renovate
+
+ - [26: Configure Renovate](https://github.com/laminas/laminas-eventmanager/pull/26) thanks to @renovate[bot]
+
 ## 3.5.0 - 2022-04-06
 
 
