@@ -5,7 +5,10 @@
  */
 $items = $block->getItems();
 $category = $block->getCategory();
+
 ?>
+<div class="category_common_class">
+
 <?php $total_count = count($category); ?>
 <?php if (count($category)) { ?>
     <div class="category">
@@ -14,7 +17,8 @@ $category = $block->getCategory();
         <?php foreach ($category as $content) { ?>
             <?php $set_count += 1; ?>
             <?php $categoryName = $content->getCategoryName(); ?>
-            <a class="<?php echo strtolower(str_replace(' ', '_', $categoryName)) ?>" href="<?php echo $this->getUrl('menucreate/frontend/display'); ?>">
+            <a class="<?php echo $categoryName ?>" href="<?php echo $this->getUrl('menucreate/frontend/display'); ?>">
+
                 <?php
                 if ($set_count < $total_count) {
                     $categoryName = $categoryName . ",";
@@ -45,16 +49,9 @@ $category = $block->getCategory();
     ?>
 </div>
 
-<!-- <div id="search-container" class="search-bar">
+<div id="search-container" class="search-bar">
     <input type="text" id="search-bar" class="search-text" placeholder="Search for..." />
     <button type="button" id="search-button" class="search-button" value="Search">Search</button>
-</div> -->
-
-<div class="search-bar" style="width: 300px">
-    <div class="search-text">
-        <input id="search-id" type="text" placeholder="Search for..." />
-    </div>
-    <input class="search-button" type="button" value="Search" />
 </div>
 
 <div class="count_contents_default">
@@ -66,14 +63,12 @@ $category = $block->getCategory();
 <div class="count_searched_items">
 </div>
 
-
-
 <div class="default-items">
     <?php
     foreach ($items as $item) {
         if ($item->getCategoryName() == 'Glossary') {
             echo '<div class="item-id">
-                <h4 class="title" >' . $item->getTitle() . '</h4>
+                <h4 class="category-title" >' . $item->getTitle() . '</h4>
                 <p class="description">' . $item->getDescription() . '</p>
                 </div>';
         }
@@ -84,33 +79,29 @@ $category = $block->getCategory();
 <div class="ajax-content">
 </div>
 
+</div>
+
 <script>
     require(['jquery', 'domReady!'], function($) {
         var count_contents_default;
         var numDiv = $('.item-id:visible').length;
         $(".count_contents_default").html("There are currently " + numDiv + " names in this directory");
         numDiv = 0;
-        // var repstr = "<span class='highlight'>" + searchword + "</span>";
+
+        $('.Glossary').css("text-decoration", "underline");
+        $('.Glossary').css("color", "#666");
 
         $('.category a').on('click', function(e) {
             e.preventDefault();
+            $('a').removeAttr('style');
+            $(this).css("text-decoration", "underline");
+            $(this).css("color", "#666");
             $('.default-items').remove();
             $('.ajax-content .items').remove();
             $('.ajax-content .count_items_ajax').remove();
             count_contents_default = $('.count_contents_default').detach();
             $(".count_letter_filtered_items").css('display', 'none');
             $(".count_searched_items").css('display', 'none');
-            // $('.count_letter_filtered_items').remove();
-            
-
-
-            // $(".items").each(function(index, element) {
-            //     numDiv++;
-            //     console.log(numDiv);
-            // });
-
-
-
 
             let href = $(this).attr("class");
             // console.log(href);
@@ -137,30 +128,25 @@ $category = $block->getCategory();
                 }
             });
 
-            
+
         });
 
         // in page search 
-
-        $('.search-button').click(function(e) {
+        $('#search-button').click(function(e) {
             e.preventDefault();
             $(".count_searched_items").css('display', 'block');
             $(".count_contents_default").css('display', 'none');
             $(".count_letter_filtered_items").css('display', 'none');
             $(".count_items_ajax").remove();
-
-
             $(".highlight").css("background-color", "transparent");
 
-            var searchword = $("#search-id").val();
+            var searchword = $("#search-bar").val();
+            console.log(searchword);
             var newSearchword = searchword;
 
             var param;
 
-            // includes("^\\w+([-+.\\']\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
-
             if (searchword.includes("+") || searchword.includes("++") || searchword.includes(".") || searchword.includes("(") || searchword.includes(")")) {
-                // newSearchword = newSearchword.replace(/\+/g, "\\+");
                 newSearchword = newSearchword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             }
 
@@ -173,7 +159,6 @@ $category = $block->getCategory();
                     $(this).html($(this).html().replace(custfilter, repstr));
                 })
             }
-
             console.log(searchword);
             console.log(custfilter);
             console.log(repstr);
@@ -196,17 +181,14 @@ $category = $block->getCategory();
         });
 
         //Letterwise filter
-
         $('.first_letter_filter a').on('click', function(e) {
             e.preventDefault();
             $(".count_letter_filtered_items").css('display', 'block');
             $(".count_contents_default").css('display', 'none');
             $(".count_searched_items").css('display', 'none');
-            
-            // count_contents_default = $('.count_contents_default').detach();
             $('.ajax-content .count_items_ajax').remove();
             var href = $(this).attr("class");
-            var title = $('.title');
+            var title = $('.category-title');
             var page = $('.item-id');
             page.each(function(index, element) {
                 var trimmedText = $(this).text().trim();
@@ -220,14 +202,9 @@ $category = $block->getCategory();
                     $(this).css('display', 'none');
                 }
             });
-            
-            // $('.count_contents_default').append(data);
-
-            // $('div').prepend(count_contents_default);
             $(".count_letter_filtered_items").html("There are currently " + numDiv + " names in this directory");
             // console.log(numDiv);
             numDiv = 0;
         });
-        
     });
 </script>

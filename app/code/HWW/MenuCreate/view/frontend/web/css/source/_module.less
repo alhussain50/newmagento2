@@ -8,18 +8,52 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/style.less to edit thi
 */
 & when (@media-common =true) {
 
+    // .category{
+    //     color: #666666;
+    // }
 
+    .category_common_class{
+        color: #666666;
+    }
+
+    .category_link_after_click{
+        text-decoration: underline;
+        color: #666;
+    }
+
+    .category {
+        padding-bottom: 40px;
+    }
+
+    .first_letter_filter {
+        padding-bottom: 10px;
+    }
+
+    .item-id{
+        line-height: 2.8em;
+    }
+
+    .item-id:after {
+        content: " ";
+        display: block;
+        border-bottom: 0.5px solid #666666;
+    }
+
+    .item-id:last-child::after{
+        display: none;
+    }
 
     //css for search bar
     #search-container {
-        width: 300px;
+        width: 280px;
         // margin: 0 auto;
         margin: 10px 0px;
         text-align: left;
+        padding-bottom: 10px;
       }
       #search-bar {
         width: 75%;
-        height: 30px;
+        height: 25px;
         padding: 6px 12px;
         font-size: 14px;
         line-height: 1.42857143;
@@ -31,23 +65,19 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/style.less to edit thi
       #search-button {
         /* Add styles for the search button here */
         width: 25%;
-        height: 30px;
+        height: 25px;
         font-size: 14px;
         color: #333;
         background-color: #EFEFEF;
-        border: 1px solid #ccc;
+        padding: 2px 1px;
+        border: 1px solid;
         float: right;
+        border-radius: 0px;
       }
 
     .hidden {
         display: none;
     }
-
-    // .item-id span
-    // {
-    //     background-color:yellow;
-    // }
-
 
     .highlight {
         background-color: yellow;
@@ -76,6 +106,5 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/style.less to edit thi
         height: 100%;
         width: 100%;
         box-sizing: border-box;
-
     }
 }
