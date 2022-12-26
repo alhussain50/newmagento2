@@ -1,0 +1,115 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/style.less to edit this template
+*/
+/*
+    Created on : Dec 6, 2022, 5:07:19 PM
+    Author     : wali
+*/
+& when (@media-common =true) {
+
+    // .category{
+    //     color: #666666;
+    // }
+
+    .category_common_class{
+        color: #666666;
+    }
+
+    .category_link_after_click{
+        text-decoration: underline;
+        color: #666;
+    }
+
+    .category {
+        padding-bottom: 40px;
+    }
+
+    .first_letter_filter {
+        padding-bottom: 10px;
+    }
+
+    .item-id{
+        line-height: 2.8em;
+    }
+
+    .item-id:after {
+        content: " ";
+        display: block;
+        border-bottom: 0.5px solid #666666;
+    }
+
+    .item-id:last-child::after{
+        display: none;
+    }
+
+    //css for search bar
+    #search-container {
+        width: 280px;
+        // margin: 0 auto;
+        margin: 10px 0px;
+        text-align: left;
+        padding-bottom: 10px;
+      }
+      #search-bar {
+        width: 75%;
+        height: 25px;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        // border-radius: 4px;
+      }
+
+      #search-bar:focus{
+        border-color: black;
+      }
+
+      #search-button {
+        /* Add styles for the search button here */
+        width: 25%;
+        height: 25px;
+        font-size: 14px;
+        color: #333;
+        background-color: #EFEFEF;
+        padding: 2px 1px;
+        border: 1px solid;
+        float: right;
+        border-radius: 0px;
+      }
+
+    .hidden {
+        display: none;
+    }
+
+    .highlight {
+        background-color: yellow;
+    }
+
+    #item-id {
+        border-bottom: 1px solid #ddd;
+        margin: 15px 0;
+    }
+
+    .search-bar {
+        display: table;
+        box-sizing: border-box;
+    }
+
+    .search-bar .search-text {
+        display: table-cell;
+        width: 100%;
+    }
+
+    .search-bar .search-button {
+        display: table-cell;
+    }
+
+    .search-bar .search-text>input {
+        height: 100%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

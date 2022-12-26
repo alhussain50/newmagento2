@@ -1,0 +1,209 @@
+<?php
+
+/**
+ * @var \Harriswebworks\CustomCategory\Block\Display $block
+ */
+$items = $block->getItems();
+$category = $block->getCategory();
+
+?>
+<div class="category_common_class">
+
+<?php $total_count = count($category); ?>
+<?php if (count($category)) { ?>
+    <div class="category">
+        <?php echo "View:" ?>
+        <?php $set_count = 0; ?>
+        <?php foreach ($category as $content) { ?>
+            <?php $set_count += 1; ?>
+            <?php $categoryName = $content->getCategoryName(); ?>
+            <a class="<?php echo $categoryName ?>" href="<?php echo $this->getUrl('customcategory/filter/display'); ?>">
+                <?php
+                if ($set_count < $total_count) {
+                    $categoryName = $categoryName . ",";
+                    echo $categoryName;
+                } else {
+                    echo $categoryName;
+                }
+                ?>
+            </a>
+        <?php
+        }
+        ?>
+    </div>
+<?php
+}
+?>
+
+<div class="first_letter_filter">
+    <a class="all" href="<?php echo $this->getUrl('customcategory/filter/display'); ?>">All</a>
+    <?php echo " | "; ?>
+    <a class="#" href="<?php echo $this->getUrl('customcategory/filter/display'); ?>">#</a>
+    <?php foreach (range('A', 'Z') as $elements) { ?>
+        <a class="<?php echo $elements ?>" href="<?php echo $this->getUrl('customcategory/filter/display'); ?>">
+            <?php echo $elements . " " ?>
+        </a>
+    <?php
+    }
+    ?>
+</div>
+
+<div id="search-container" class="search-bar">
+    <input type="text" id="search-bar" class="search-text" placeholder="Search for..." />
+    <button type="button" id="search-button" class="search-button" value="Search">Search</button>
+</div>
+
+<div class="count_contents_default">
+</div>
+
+<div class="count_letter_filtered_items">
+</div>
+
+<div class="count_searched_items">
+</div>
+
+<div class="default-items">
+    <?php
+    foreach ($items as $item) {
+        if ($item->getCategoryName() == 'Glossary') {
+            echo '<div class="item-id">
+                <h4 class="category-title" >' . $item->getTitle() . '</h4>
+                <p class="description">' . $item->getDescription() . '</p>
+                </div>';
+        }
+    }
+    ?>
+</div>
+
+<div class="ajax-content">
+</div>
+
+</div>
+
+<script>
+    require(['jquery', 'domReady!'], function($) {
+        var count_contents_default;
+        var numDiv = $('.item-id:visible').length;
+        $(".count_contents_default").html("There are currently " + numDiv + " names in this directory");
+        numDiv = 0;
+
+        $('.Glossary').css("text-decoration", "underline");
+        $('.Glossary').css("color", "#666");
+
+        $('.category a').on('click', function(e) {
+            e.preventDefault();
+            $('a').removeAttr('style');
+            $(this).css("text-decoration", "underline");
+            $(this).css("color", "#666");
+            $('.default-items').remove();
+            $('.ajax-content .items').remove();
+            $('.ajax-content .count_items_ajax').remove();
+            count_contents_default = $('.count_contents_default').detach();
+            $(".count_letter_filtered_items").css('display', 'none');
+            $(".count_searched_items").css('display', 'none');
+
+            let href = $(this).attr("class");
+            // console.log(href);
+
+            var template = 'categoryitem.phtml';
+            console.log(href);
+            $.ajax({
+                type: "POST",
+                url: "<?= $block->getBaseUrl(); ?>customcategory/filter/categoryitem",
+                data: {
+                    category: href,
+                },
+                success: function(data) {
+                    if (data != '') {
+                        $('.ajax-content').append(data.output);
+                    } else {
+                        contentLocation.html("No Data");
+                    }
+                    console.log(data.output);
+                    console.log("success!");
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    console.log('Error happens. Try again.');
+                }
+            });
+
+
+        });
+
+        // in page search 
+        $('#search-button').click(function(e) {
+            e.preventDefault();
+            $(".count_searched_items").css('display', 'block');
+            $(".count_contents_default").css('display', 'none');
+            $(".count_letter_filtered_items").css('display', 'none');
+            $(".count_items_ajax").remove();
+            $(".highlight").css("background-color", "transparent");
+
+            var searchword = $("#search-bar").val();
+            console.log(searchword);
+            var newSearchword = searchword;
+
+            var param;
+
+            if (searchword.includes("+") || searchword.includes("++") || searchword.includes(".") || searchword.includes("(") || searchword.includes(")")) {
+                newSearchword = newSearchword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            }
+
+            var custfilter = new RegExp("(" + newSearchword + ")", "igm");
+
+            var repstr = "<span class='highlight'>" + searchword + "</span>";
+
+            if (searchword != "") {
+                $('.item-id').each(function() {
+                    $(this).html($(this).html().replace(custfilter, repstr));
+                })
+            }
+            console.log(searchword);
+            console.log(custfilter);
+            console.log(repstr);
+
+            var page = $('.item-id');
+            page.each(function(index, element) {
+                let text = $(this).text();
+                let result = custfilter.test(text);
+                if (result) {
+                    $(this).css('display', 'block');
+                    numDiv++;
+                } else {
+                    $(this).css('display', 'none');
+                }
+            });
+            console.log(numDiv);
+            $(".count_searched_items").html("There are currently " + numDiv + " names in this directory");
+            numDiv = 0;
+
+        });
+
+        //Letterwise filter
+        $('.first_letter_filter a').on('click', function(e) {
+            e.preventDefault();
+            $(".count_letter_filtered_items").css('display', 'block');
+            $(".count_contents_default").css('display', 'none');
+            $(".count_searched_items").css('display', 'none');
+            $('.ajax-content .count_items_ajax').remove();
+            var href = $(this).attr("class");
+            var title = $('.category-title');
+            var page = $('.item-id');
+            page.each(function(index, element) {
+                var trimmedText = $(this).text().trim();
+                var test = $(this).text();
+                var filter = trimmedText.toString().startsWith(href);
+
+                if (filter || href == 'all') {
+                    $(this).css('display', 'block');
+                    numDiv++;
+                } else {
+                    $(this).css('display', 'none');
+                }
+            });
+            $(".count_letter_filtered_items").html("There are currently " + numDiv + " names in this directory beginning with the letter " + href + ".");
+            // console.log(numDiv);
+            numDiv = 0;
+        });
+    });
+</script>

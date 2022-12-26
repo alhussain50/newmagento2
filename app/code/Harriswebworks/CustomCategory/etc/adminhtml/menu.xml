@@ -1,0 +1,7 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Harriswebworks_CustomCategory::item" title="Custom Category Search" translate="title" module="Harriswebworks_CustomCategory" sortOrder="50" resource="Harriswebworks_CustomCategory::item" parent="Harriswebworks_Core::all" />
+        <add id="Harriswebworks_CustomCategory::item_create" title="Item List" translate="title" module="Harriswebworks_CustomCategory" parent="Harriswebworks_CustomCategory::item" sortOrder="10" action="customcategory/index/index" resource="Harriswebworks_CustomCategory::item"/>
+        <add id="Harriswebworks_CustomCategory::category_create" title="Category List" translate="title" module="Harriswebworks_CustomCategory" parent="Harriswebworks_CustomCategory::item" sortOrder="20" action="customcategory/category/index" resource="Harriswebworks_CustomCategory::item"/>
+    </menu>
+</config>
